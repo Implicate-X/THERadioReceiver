@@ -141,11 +141,13 @@ namespace THERadioReceiver
 
 					HttpWebResponse currentResponse = ( HttpWebResponse )currentRequest.GetResponse();
 					this.response = currentResponse;
+
 					Debug.WriteLine( "Radio stream HTTP status: " + currentResponse.StatusCode );
 
 					if( currentResponse.StatusCode == HttpStatusCode.OK )
 					{
 						Debug.WriteLine( "Radio stream content type: " + currentResponse.ContentType );
+
 						if( currentResponse.ContentType == null || currentResponse.ContentType.ToLower().IndexOf( "audio/mpeg" ) != 0 )
 						{
 							throw new InvalidOperationException( "Radio stream did not return MP3 audio." );
@@ -154,10 +156,12 @@ namespace THERadioReceiver
 					}
 
 					int status = ( int )currentResponse.StatusCode;
+
 					if( status != 301 && status != 302 && status != 303 && status != 307 && status != 308 )
 					{
 						throw new InvalidOperationException( "Unexpected radio stream HTTP status: " + status );
 					}
+
 					if( redirects >= MaxRedirects )
 					{
 						throw new InvalidOperationException( "Too many radio stream redirects." );
@@ -194,6 +198,7 @@ namespace THERadioReceiver
 						{
 							this.response = null!;
 							this.request = null!;
+
 							currentRequest.Dispose();
 						}
 					}
