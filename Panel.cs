@@ -6,26 +6,66 @@ using ImplicateX.TinyCLR.Drivers.Display;
 using ImplicateX.TinyCLR.Drivers.Decoder;
 using ImplicateX.TinyCLR.Drivers.Decoder.IR;
 using ImplicateX.TinyCLR.Drivers.Expander;
+using ImplicateX.TinyCLR.Drivers.Tuner;
 
 namespace THERadioReceiver
 {
+	/// <summary>
+	/// Initializes and manages the radio receiver's front-panel controls, indicators,
+	/// display, rotary tuner input, and infrared remote control.
+	/// </summary>
+	/// <param name="chassis">The receiver chassis providing board and radio services.</param>
 	public sealed class Panel( Chassis chassis )
 	{
 		private GpioController gpioController = null!;
 		private Mcp23017 gpioExpander = null!;
 		private I2cController i2cController = null!;
-		private Ls7366 quadDecoder = null!;
-		private Generic16x2VFD vfd = null!;
-		private BinaryDistanceDecoder bdd = null!;
-		private GpioPin ledStereoPin = null!;
-		private GpioPin ledTunedPin = null!;
-		private GpioPin ledRdsPin = null!;
+		/// <summary>Gets the front-panel stereo indicator pin.</summary>
+		public GpioPin StereoLedPin { get; private set; } = null!;
 
+		/// <summary>Gets the front-panel tuned indicator pin.</summary>
+		public GpioPin TunedLedPin { get; private set; } = null!;
+
+		/// <summary>Gets the front-panel RDS indicator pin.</summary>
+		public GpioPin RdsLedPin { get; private set; } = null!;
+
+		/// <summary>Gets the 16x2 vacuum fluorescent display.</summary>
+		public Generic16x2VFD VFDisplay { get; private set; } = null!;
+
+		/// <summary>Gets the LS7366 quadrature decoder used for tuning input.</summary>
+		public Ls7366 QuadDecoder { get; private set; } = null!;
+
+		/// <summary>Gets the infrared remote-control decoder.</summary>
+		public BinaryDistanceDecoder BDDecoder { get; private set; } = null!;
+
+		/// <summary>
+		/// Opens and configures the display, front-panel keys and indicators,
+		/// quadrature decoder, and infrared remote-control input.
+		/// </summary>
 		public void Initialize()
 		{
 			i2cController = chassis.Board.I2cController;
 			gpioController = chassis.Board.GpioController;
 			gpioExpander = chassis.Board.GpioExpander;
+
+			#region Initialize 16x2 Vacuum Fluorescent Display (VFD)
+			VFDisplay = new(
+				gpioController,
+				vfdClockPinId: Board.ControllerPin.VFDClock,
+				vfdDataPinId: Board.ControllerPin.VFDData,
+				vfdCSPinId: Board.ControllerPin.VFDCS,
+				vfResetPinId: Board.ControllerPin.VFReset );
+
+			VFDisplay.SetScrollDelay( 150 );
+			VFDisplay.SetLines( "THE Radio Receiver", "Initializing..." );
+
+			Thread vfdThread = new( () => VFDisplay.Run() )
+			{
+				Priority = ThreadPriority.Lowest
+			};
+
+			vfdThread.Start();
+			#endregion
 
 			#region Front panel keys pins
 			GpioPin keyMenuPin = gpioExpander.OpenPin( Board.ExpanderPin.KeyMenu );
@@ -39,15 +79,15 @@ namespace THERadioReceiver
 			#endregion
 
 			#region Front panel LEDs pins
-			ledTunedPin = gpioExpander.OpenPin( Board.ExpanderPin.LedTuned );
-			ledTunedPin.SetDriveMode( GpioPinDriveMode.Output );
-			ledTunedPin.Write( GpioPinValue.High );
-			ledStereoPin = gpioExpander.OpenPin( Board.ExpanderPin.LedStereo );
-			ledStereoPin.SetDriveMode( GpioPinDriveMode.Output );
-			ledStereoPin.Write( GpioPinValue.High );
-			ledRdsPin = gpioExpander.OpenPin( Board.ExpanderPin.LedRDS );
-			ledRdsPin.SetDriveMode( GpioPinDriveMode.Output );
-			ledRdsPin.Write( GpioPinValue.High );
+			TunedLedPin = gpioExpander.OpenPin( Board.ExpanderPin.LedTuned );
+			TunedLedPin.SetDriveMode( GpioPinDriveMode.Output );
+			TunedLedPin.Write( GpioPinValue.High );
+			StereoLedPin = gpioExpander.OpenPin( Board.ExpanderPin.LedStereo );
+			StereoLedPin.SetDriveMode( GpioPinDriveMode.Output );
+			StereoLedPin.Write( GpioPinValue.High );
+			RdsLedPin = gpioExpander.OpenPin( Board.ExpanderPin.LedRDS );
+			RdsLedPin.SetDriveMode( GpioPinDriveMode.Output );
+			RdsLedPin.Write( GpioPinValue.High );
 			#endregion
 
 			#region Front panel keys event handlers
@@ -63,7 +103,7 @@ namespace THERadioReceiver
 			{
 				if( args.Edge == GpioPinEdge.FallingEdge )
 				{
-					RequestAudioSourceToggle();
+					chassis.AudioSystem.RequestAudioSourceToggle();
 				}
 			};
 
@@ -79,32 +119,32 @@ namespace THERadioReceiver
 			{
 				if( args.Edge == GpioPinEdge.FallingEdge )
 				{
-					vfd.Brightness.Value = vfd.Brightness.Value + 0x10;
-					Debug.WriteLine( $"Brightness value changed to: {vfd.Brightness.Value}" );
+					VFDisplay.Brightness.Value = VFDisplay.Brightness.Value + 0x10;
+					Debug.WriteLine( $"Brightness value changed to: {VFDisplay.Brightness.Value}" );
 				}
 			};
 			#endregion
 
 			#region LS7366R Quadrature Decoder/Counter
-			quadDecoder = new(
+			QuadDecoder = new(
 				gpioController,
 				Board.ControllerPin.DecoderCS,
 				Board.ControllerPin.DecoderSCLK,
 				Board.ControllerPin.DecoderMOSI,
 				Board.ControllerPin.DecoderMISO );
 
-			quadDecoder.CounterChanged += decoderEvent =>
+			QuadDecoder.CounterChanged += decoderEvent =>
 			{
 				_ = ( decoderEvent.Direction ) switch
 				{
-					( Ls7366.Direction.Up ) => ApplyTune( true, "Tune Up command received." ),
-					( Ls7366.Direction.Down ) => ApplyTune( false, "Tune Down command received." ),
+					( Ls7366.Direction.Up ) => chassis.FMRadio.ApplyTune( true, "Tune Up command received." ),
+					( Ls7366.Direction.Down ) => chassis.FMRadio.ApplyTune( false, "Tune Down command received." ),
 					_ => false
 				};
 			};
 
-			quadDecoder.ResetCounter();
-			quadDecoder.Start();
+			QuadDecoder.ResetCounter();
+			QuadDecoder.Start();
 			#endregion
 
 			#region Initialize Remote Control IR decoder
@@ -113,51 +153,35 @@ namespace THERadioReceiver
 			#endregion
 
 			#region Remote Control IR Binary Distance Decoder
-			bdd = new BinaryDistanceDecoder( remoteCtrlPin );
-			bdd.FrameDecoded += Bdd_FrameDecoded;
+			BDDecoder = new BinaryDistanceDecoder( remoteCtrlPin );
+			BDDecoder.FrameDecoded += BDDecoder_FrameDecoded;
 			#endregion
 
-			#region Initialize 16x2 Vacuum Fluorescent Display (VFD)
-			vfd = new(
-				gpioController,
-				vfdClockPinId: Board.ControllerPin.VFDClock,
-				vfdDataPinId: Board.ControllerPin.VFDData,
-				vfdCSPinId: Board.ControllerPin.VFDCS,
-				vfResetPinId: Board.ControllerPin.VFReset );
-
-			vfd.SetScrollDelay( 150 );
-			vfd.SetLines( "THE Radio Receiver", "Initializing..." );
-
-			Thread vfdThread = new( () => vfd.Run() )
-			{
-				Priority = ThreadPriority.Lowest
-			};
-
-			vfdThread.Start();
-			#endregion
 		}
 
 		/// <summary>
-		/// Handles a decoded infrared command by applying the corresponding tuner action and logging the command.
+		/// Handles a decoded infrared command by applying the corresponding tuner
+		/// or audio-source action, updating the reported tune frequency, and logging
+		/// the command.
 		/// </summary>
-		/// <param name="arg">The decoded frame event arguments containing the raw command value.</param>
-		private void Bdd_FrameDecoded( BinaryDistanceDecoder.FrameEventArgs arg )
+		/// <param name="arg">The decoded infrared frame, including its raw value.</param>
+		private void BDDecoder_FrameDecoded( BinaryDistanceDecoder.FrameEventArgs arg )
 		{
 			BinaryDistanceDecoder.Code.DENON.TryGetValue( arg.RawValue, out string commandName );
 
-			ushort tuneFrequency10kHz = ( ushort )( tuneFrequency );
+			ushort tuneFrequency10kHz = ( ushort )( chassis.FMRadio.TuneFrequency );
 
 			_ = ( commandName ) switch
 			{
-				( "Tuning +" ) => ApplyTune( true, "Tune Up command received." ),
-				( "Tuning -" ) => ApplyTune( false, "Tune Down command received." ),
-				( "Tuner Preset +" ) => tef668x.SeekNextStation( Tef668x.SeekDirection.Up, out tuneFrequency10kHz ),
-				( "Tuner Preset -" ) => tef668x.SeekNextStation( Tef668x.SeekDirection.Down, out tuneFrequency10kHz ),
-				( "Tuner Band" ) => RequestAudioSourceToggle(),
+				( "Tuning +" ) => chassis.FMRadio.ApplyTune( true, "Tune Up command received." ),
+				( "Tuning -" ) => chassis.FMRadio.ApplyTune( false, "Tune Down command received." ),
+				( "Tuner Preset +" ) => chassis.FMRadio.TunerModule.SeekNextStation( Tef668x.SeekDirection.Up, out tuneFrequency10kHz ),
+				( "Tuner Preset -" ) => chassis.FMRadio.TunerModule.SeekNextStation( Tef668x.SeekDirection.Down, out tuneFrequency10kHz ),
+				( "Tuner Band" ) => chassis.AudioSystem.RequestAudioSourceToggle(),
 				_ => false
 			};
 
-			tuneFrequency = tuneFrequency10kHz;
+			chassis.FMRadio.TuneFrequency = tuneFrequency10kHz;
 
 			Debug.WriteLine( $"IR command received: {commandName} (raw: 0x{arg:X4})" );
 		}

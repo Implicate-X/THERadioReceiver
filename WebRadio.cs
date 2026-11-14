@@ -10,6 +10,7 @@ using GHIElectronics.TinyCLR.Devices.Gpio;
 using GHIElectronics.TinyCLR.Pins;
 using GHIElectronics.TinyCLR.Devices.Network;
 using GHIElectronics.TinyCLR.Devices.Spi;
+using ImplicateX.TinyCLR.Drivers.Expander;
 //FMRadio
 // └─ FMTuner
 //WebRadio
@@ -22,11 +23,14 @@ namespace THERadioReceiver
 		public const string TestStationName = "Bremen Zwei";
 		public const string TestStationFormat = "MP3 128 kbit/s";
 		private volatile bool linkReady = false;
-		public Vs1053 StreamPlayer { get; }
-		private GpioController gpioController = GpioController.GetDefault();
+		private GpioController gpioController = null!;
+		private Mcp23017 gpioExpander = null!;
 
 		public void Initialize()
 		{
+			gpioController = chassis.Board.GpioController;
+			gpioExpander = chassis.Board.GpioExpander;
+
 			var networkController = NetworkController.FromName( SC20100.NetworkController.Enc28j60 );
 
 			var cs = gpioController.OpenPin( Board.ControllerPin.EthernetCS );

@@ -49,9 +49,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AudioSystem.cs" />
     <Compile Include="Board.cs" />
     <Compile Include="Chassis.cs" />
-    <Compile Include="FMRadio.cs" />
+    <Compile Include="FmRadio.cs" />
+    <Compile Include="FmRadioDisplay.cs" />
     <Compile Include="Panel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
