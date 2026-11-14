@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="THERadioReceiver.csproj">
+    <Deploy />
+  </Project>
+</Solution>
