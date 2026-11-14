@@ -11,10 +11,7 @@ using GHIElectronics.TinyCLR.Pins;
 using GHIElectronics.TinyCLR.Devices.Network;
 using GHIElectronics.TinyCLR.Devices.Spi;
 using ImplicateX.TinyCLR.Drivers.Expander;
-//FMRadio
-// └─ FMTuner
-//WebRadio
-// └─ StreamPlayer
+
 namespace THERadioReceiver
 {
 	public sealed class WebRadio( Chassis chassis )
@@ -126,6 +123,7 @@ namespace THERadioReceiver
 				for( int redirects = 0; ; redirects++ )
 				{
 					HttpWebRequest currentRequest;
+
 					lock( this.sync )
 					{
 						if( this.cancelled || this.disposed )
@@ -166,20 +164,24 @@ namespace THERadioReceiver
 					}
 
 					string location = currentResponse.Headers[ "Location" ];
+
 					if( string.IsNullOrEmpty( location ) )
 					{
 						throw new InvalidOperationException( "Radio stream redirect has no Location header." );
 					}
 
 					var target = new Uri( location );
+
 					if( !target.IsAbsoluteUri || ( target.Scheme != "http" && target.Scheme != "https" ) )
 					{
 						throw new InvalidOperationException( "Radio stream redirect must be an absolute HTTP or HTTPS URL." );
 					}
+
 					if( currentRequest.RequestUri.Scheme == "https" && target.Scheme == "http" )
 					{
 						throw new InvalidOperationException( "Radio stream redirect from HTTPS to HTTP is not allowed." );
 					}
+
 					url = location;
 
 					lock( this.sync )
@@ -235,177 +237,11 @@ namespace THERadioReceiver
 			linkReady = e.Connected;
 			Debug.WriteLine( "Network link connected changed: " + e.Connected );
 
-			//TestHttpWebRequest( "https://www.bing.com/robots.txt" );
 		}
 
 		private void NetworkController_NetworkAddressChanged( NetworkController sender, NetworkAddressChangedEventArgs e )
 		{
 			Debug.WriteLine( "Network address changed: " + e.Timestamp.ToString() );
-		}
-
-		public static void TestHttp( string url )
-		{
-			var req = ( HttpWebRequest )WebRequest.Create( url );
-			req.AllowAutoRedirect = true;   // TinyCLR folgt automatisch
-			var resp = ( HttpWebResponse )req.GetResponse();
-			Debug.WriteLine( "Status: " + resp.StatusCode );
-			var s = resp.GetResponseStream();
-			Debug.WriteLine( "StreamType: " + s.GetType().FullName );
-		}
-
-		public static void TestSocket( string host, int port )
-		{
-			var ipHost = Dns.GetHostEntry( host );
-			var ipAddress = ipHost.AddressList[ 0 ];
-			var remoteEP = new IPEndPoint( ipAddress, port );
-			var socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
-			socket.Connect( remoteEP );
-			Debug.WriteLine( "Socket connected to: " + socket.RemoteEndPoint.ToString() );
-		}
-
-		public static void TestDns( string host )
-		{
-			var ipHost = Dns.GetHostEntry( host );
-			Debug.WriteLine( "DNS lookup for: " + host );
-			foreach( var ip in ipHost.AddressList )
-				Debug.WriteLine( "IP: " + ip.ToString() );
-		}
-
-		//public static void TestPing( string host )
-		//{
-		//	var ping = new Ping();
-		//	var reply = ping.Send( host );
-		//	Debug.WriteLine( "Ping to: " + host + " Status: " + reply.Status.ToString() + " Time: " + reply.RoundtripTime.ToString() );
-		//}
-
-		public static void TestUdp( string host, int port )
-		{
-			var ipHost = Dns.GetHostEntry( host );
-			var ipAddress = ipHost.AddressList[ 0 ];
-			var remoteEP = new IPEndPoint( ipAddress, port );
-			var socket = new Socket( AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp );
-			socket.Connect( remoteEP );
-			Debug.WriteLine( "UDP socket connected to: " + socket.RemoteEndPoint.ToString() );
-		}
-
-		public static void TestTcp( string host, int port )
-		{
-			var ipHost = Dns.GetHostEntry( host );
-			var ipAddress = ipHost.AddressList[ 0 ];
-			var remoteEP = new IPEndPoint( ipAddress, port );
-			var socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
-			socket.Connect( remoteEP );
-			Debug.WriteLine( "TCP socket connected to: " + socket.RemoteEndPoint.ToString() );
-		}
-
-		public static void TestTcpListener( int port )
-		{
-			var localEP = new IPEndPoint( IPAddress.Any, port );
-			var listener = new TcpListener( localEP );
-			listener.Start();
-			Debug.WriteLine( "TCP listener started on port: " + port.ToString() );
-		}
-
-		public static void TestUdpListener( int port )
-		{
-			var localEP = new IPEndPoint( IPAddress.Any, port );
-			var socket = new Socket( AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp );
-			socket.Bind( localEP );
-			Debug.WriteLine( "UDP listener started on port: " + port.ToString() );
-		}
-
-		//public static void TestHttpListener( int port )
-		//{
-		//	var listener = new HttpListener();
-		//	listener.Prefixes.Add( "http://*:" + port.ToString() + "/" );
-		//	listener.Start();
-		//	Debug.WriteLine( "HTTP listener started on port: " + port.ToString() );
-		//}
-
-		//public static void TestHttpsListener( int port )
-		//{
-		//	var listener = new HttpListener();
-		//	listener.Prefixes.Add( "https://*:" + port.ToString() + "/" );
-		//	listener.Start();
-		//	Debug.WriteLine( "HTTPS listener started on port: " + port.ToString() );
-		//}
-
-		//public static void TestHttpClient( string url )
-		//{
-		//	var client = new HttpClient();
-		//	var response = client.GetAsync( url ).Result;
-		//	Debug.WriteLine( "HTTP client response: " + response.StatusCode.ToString() );
-		//}
-
-		//public static void TestHttpsClient( string url )
-		//{
-		//	var client = new HttpClient();
-		//	var response = client.GetAsync( url ).Result;
-		//	Debug.WriteLine( "HTTPS client response: " + response.StatusCode.ToString() );
-		//}
-
-		//public static void TestWebClient( string url )
-		//{
-		//	var client = new WebClient();
-		//	var data = client.DownloadData( url );
-		//	Debug.WriteLine( "WebClient downloaded " + data.Length.ToString() + " bytes from: " + url );
-		//}
-
-		public static void TestWebRequest( string url )
-		{
-			Debug.WriteLine( "Testing WebRequest to: " + url );
-
-			var request = WebRequest.Create( url );
-			var response = request.GetResponse();
-			Debug.WriteLine( "WebRequest response: " + ( ( HttpWebResponse )response ).StatusCode.ToString() );
-		}
-
-		public static void TestHttpWebRequest( string url )
-		{
-			Debug.WriteLine( "Testing HttpWebRequest to: " + url );
-
-			int total = 0;
-			byte[] result = new byte[ 512 ];
-
-			try
-			{
-				using var req = HttpWebRequest.Create( url ) as HttpWebRequest;
-
-				if ( req == null )
-				{
-					Debug.WriteLine( "HttpWebRequest is null" );
-					return;
-				}
-
-				req.KeepAlive = false;
-				req.ReadWriteTimeout = 2000;
-
-				using var res = req.GetResponse() as HttpWebResponse;
-
-				if ( res == null )
-				{
-					Debug.WriteLine( "HttpWebResponse is null" );
-					return;
-				}
-
-				using var stream = res.GetResponseStream();
-
-				int read;
-				do
-				{
-					read = stream.Read( result, 0, result.Length );
-					total += read;
-
-					Debug.WriteLine( "read: " + read + ", total: " + total );
-
-					var page = new string( Encoding.UTF8.GetChars( result, 0, read ) );
-					Debug.WriteLine( "Response: " + page );
-				} while( read != 0 );
-			}
-			catch( Exception ex )
-			{
-				Debug.WriteLine( "HTTP request failed: " + ex.Message );
-			}
 		}
 	}
 }
