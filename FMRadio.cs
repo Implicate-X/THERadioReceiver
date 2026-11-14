@@ -46,7 +46,7 @@ namespace THERadioReceiver
 		/// <summary>
 		/// Thread used to retrieve radio information.
 		/// </summary>
-		private Thread infoThread;
+		private Thread infoThread = null!;
 		/// <summary>
 		/// Synchronizes access to information-thread state.
 		/// </summary>
