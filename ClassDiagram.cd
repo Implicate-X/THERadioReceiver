@@ -1,0 +1,94 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="THERadioReceiver.Board">
+    <Position X="3.5" Y="0.5" Width="3" />
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Class Name="THERadioReceiver.Board.I2cAddress" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Board.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Class Name="THERadioReceiver.Board.ControllerPin" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Board.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Class Name="THERadioReceiver.Board.ExpanderPin" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Board.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>CBAAAAAAACAAAQAAAAAAAAAMAAAAgAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Board.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="THERadioReceiver.Panel">
+    <Position X="3.5" Y="6" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAoAAAgAAQAAAQAgAAAAAAAAACAAGAQAAAAAAAABAAA=</HashCode>
+      <FileName>Panel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="THERadioReceiver.FmRadioDisplay">
+    <Position X="7" Y="5" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AoQAAAAAAIAwAACAEAAAgAAIAAABAAAAIAIAAABAAAA=</HashCode>
+      <FileName>FmRadioDisplay.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="THERadioReceiver.FmRadio">
+    <Position X="7" Y="0.5" Width="3" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>YBBRAAgAgAAAAYAgQKQAAAARAACkWCAAAAAAEAIAKAA=</HashCode>
+      <FileName>FmRadio.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="THERadioReceiver.WebRadio">
+    <Position X="10.5" Y="0.5" Width="3.5" />
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Class Name="THERadioReceiver.WebRadio.RadioAudioSource" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>WebRadio.cs</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>YAAAAAAACAAAAQAgAAAAAAAAAAAECAAIAgAAAAAAAQA=</HashCode>
+      <FileName>WebRadio.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="THERadioReceiver.AudioSystem">
+    <Position X="10.5" Y="5.25" Width="3.5" />
+    <TypeIdentifier>
+      <HashCode>AAAQAAAAAgAAQ0AgAAIIAAAAAAAACAEAAABEAAAgQAA=</HashCode>
+      <FileName>AudioSystem.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="THERadioReceiver.Chassis">
+    <Position X="0.5" Y="0.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAQIAAAQAAAAAAAAAAIABAAAAACAAAAA=</HashCode>
+      <FileName>Chassis.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="THERadioReceiver.Storage">
+    <Position X="0.5" Y="6" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAABAAAAAAAAAAAAAAAAAAAAAABAAAAIAAAAQAAAAA=</HashCode>
+      <FileName>Storage.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
