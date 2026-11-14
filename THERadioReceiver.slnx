@@ -1,4 +1,12 @@
 <Solution>
+  <Folder Name="/Devices/">
+    <Project Path="../../ImplicateX/TinyCLR/Drivers/Decoder/ImplicateX.TinyCLR.Drivers.Decoder.IR.BDD/ImplicateX.TinyCLR.Drivers.Decoder.IR.BDD.csproj" />
+    <Project Path="../../ImplicateX/TinyCLR/Drivers/Decoder/ImplicateX.TinyCLR.Drivers.Decoder.Ls7366/ImplicateX.TinyCLR.Drivers.Decoder.Ls7366.csproj" />
+    <Project Path="../../ImplicateX/TinyCLR/Drivers/Decoder/ImplicateX.TinyCLR.Drivers.Decoder.Vs1053/ImplicateX.TinyCLR.Drivers.Decoder.Vs1053.csproj" />
+    <Project Path="../../ImplicateX/TinyCLR/Drivers/Display/ImplicateX.TinyCLR.Drivers.Display.Generic16x2VFD/ImplicateX.TinyCLR.Drivers.Display.Generic16x2VFD.csproj" />
+    <Project Path="../../ImplicateX/TinyCLR/Drivers/Expander/ImplicateX.TinyCLR.Drivers.Expander.Mcp23017/ImplicateX.TinyCLR.Drivers.Expander.Mcp23017.csproj" />
+    <Project Path="../../ImplicateX/TinyCLR/Drivers/Tuner/ImplicateX.TinyCLR.Drivers.Tuner.Tef668x/ImplicateX.TinyCLR.Drivers.Tuner.Tef668x.csproj" />
+  </Folder>
   <Project Path="THERadioReceiver.csproj">
     <Deploy />
   </Project>

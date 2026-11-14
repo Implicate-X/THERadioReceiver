@@ -1,15 +1,17 @@
-﻿using System;
-using System.Collections;
-using System.Diagnostics;
-using System.Text;
-using System.Threading;
+﻿using System.Threading;
 
 namespace THERadioReceiver
 {
 	internal class Program
 	{
-		static void Main()
+		private static void Main()
 		{
+			_ = new Chassis();
+
+			while( true )
+			{
+				Thread.Sleep( 1000 );
+			}
 		}
 	}
 }
