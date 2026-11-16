@@ -2,7 +2,7 @@
 
 A modern .NET-powered audio platform inspired by the listening and recording culture of the 1970s and 1980s.
 
-THERadioReceiver combines FM radio, web radio, USB audio playback, and future recording capabilities in a single embedded system built entirely with C#, TinyCLR, and custom hardware.
+[<b>T</b>]InyCLR [H]ybrid [E]mbedded Radio Receiver combines FM radio, web radio, USB audio playback, and future recording capabilities in a single embedded system built entirely with C#, TinyCLR, and custom hardware.
 
 Unlike conventional hobby projects, the hardware, firmware, protocols, synchronization mechanisms, user interface, and drivers have been developed entirely in-house. No third-party firmware, proprietary frameworks, or opaque software stacks are required.
 
