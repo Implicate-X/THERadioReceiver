@@ -17,9 +17,11 @@ namespace THERadioReceiver
 	/// <param name="chassis">The receiver chassis providing board and radio services.</param>
 	public sealed class Panel( Chassis chassis )
 	{
+		public Chassis Chassis { get; private set; } = chassis;
 		private GpioController gpioController = null!;
 		private Mcp23017 gpioExpander = null!;
 		private I2cController i2cController = null!;
+
 		/// <summary>Gets the front-panel stereo indicator pin.</summary>
 		public GpioPin StereoLedPin { get; private set; } = null!;
 
@@ -44,9 +46,9 @@ namespace THERadioReceiver
 		/// </summary>
 		public void Initialize()
 		{
-			i2cController = chassis.Board.I2cController;
-			gpioController = chassis.Board.GpioController;
-			gpioExpander = chassis.Board.GpioExpander;
+			i2cController = Chassis.Board.I2cController;
+			gpioController = Chassis.Board.GpioController;
+			gpioExpander = Chassis.Board.GpioExpander;
 
 			#region Initialize 16x2 Vacuum Fluorescent Display (VFD)
 			VFDisplay = new(
@@ -103,7 +105,7 @@ namespace THERadioReceiver
 			{
 				if( args.Edge == GpioPinEdge.FallingEdge )
 				{
-					chassis.AudioSystem.RequestAudioSourceToggle();
+					Chassis.AudioSystem.RequestAudioSourceToggle();
 				}
 			};
 
@@ -137,8 +139,8 @@ namespace THERadioReceiver
 			{
 				_ = ( decoderEvent.Direction ) switch
 				{
-					( Ls7366.Direction.Up ) => chassis.FMRadio.ApplyTune( true, "Tune Up command received." ),
-					( Ls7366.Direction.Down ) => chassis.FMRadio.ApplyTune( false, "Tune Down command received." ),
+					( Ls7366.Direction.Up ) => Chassis.FMRadio.ApplyTune( true, "Tune Up command received." ),
+					( Ls7366.Direction.Down ) => Chassis.FMRadio.ApplyTune( false, "Tune Down command received." ),
 					_ => false
 				};
 			};
@@ -169,19 +171,19 @@ namespace THERadioReceiver
 		{
 			BinaryDistanceDecoder.Code.DENON.TryGetValue( arg.RawValue, out string commandName );
 
-			ushort tuneFrequency10kHz = ( ushort )( chassis.FMRadio.TuneFrequency );
+			ushort tuneFrequency10kHz = ( ushort )( Chassis.FMRadio.TuneFrequency );
 
 			_ = ( commandName ) switch
 			{
-				( "Tuning +" ) => chassis.FMRadio.ApplyTune( true, "Tune Up command received." ),
-				( "Tuning -" ) => chassis.FMRadio.ApplyTune( false, "Tune Down command received." ),
-				( "Tuner Preset +" ) => chassis.FMRadio.TunerModule.SeekNextStation( Tef668x.SeekDirection.Up, out tuneFrequency10kHz ),
-				( "Tuner Preset -" ) => chassis.FMRadio.TunerModule.SeekNextStation( Tef668x.SeekDirection.Down, out tuneFrequency10kHz ),
-				( "Tuner Band" ) => chassis.AudioSystem.RequestAudioSourceToggle(),
+				( "Tuning +" ) => Chassis.FMRadio.ApplyTune( true, "Tune Up command received." ),
+				( "Tuning -" ) => Chassis.FMRadio.ApplyTune( false, "Tune Down command received." ),
+				( "Tuner Preset +" ) => Chassis.FMRadio.TunerModule.SeekNextStation( Tef668x.SeekDirection.Up, out tuneFrequency10kHz ),
+				( "Tuner Preset -" ) => Chassis.FMRadio.TunerModule.SeekNextStation( Tef668x.SeekDirection.Down, out tuneFrequency10kHz ),
+				( "Tuner Band" ) => Chassis.AudioSystem.RequestAudioSourceToggle(),
 				_ => false
 			};
 
-			chassis.FMRadio.TuneFrequency = tuneFrequency10kHz;
+			Chassis.FMRadio.TuneFrequency = tuneFrequency10kHz;
 
 			Debug.WriteLine( $"IR command received: {commandName} (raw: 0x{arg:X4})" );
 		}

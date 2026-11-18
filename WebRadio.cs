@@ -1,22 +1,21 @@
 ﻿using System;
-using System.Text;
-using System.Net;
-using System.Net.Sockets;
-using System.Diagnostics;
-using System.Threading;
 using System.IO;
-using ImplicateX.TinyCLR.Drivers.Decoder;
-using GHIElectronics.TinyCLR.Devices.Gpio;
+using System.Net;
+using System.Threading;
+using System.Diagnostics;
 using GHIElectronics.TinyCLR.Pins;
-using GHIElectronics.TinyCLR.Devices.Network;
+using GHIElectronics.TinyCLR.Devices.Gpio;
 using GHIElectronics.TinyCLR.Devices.Spi;
+using GHIElectronics.TinyCLR.Devices.Network;
+using ImplicateX.TinyCLR.Drivers.Decoder;
 using ImplicateX.TinyCLR.Drivers.Expander;
 
 namespace THERadioReceiver
 {
 	public sealed class WebRadio( Chassis chassis )
 	{
-		private const string TestStreamUrl = "http://wdr-wdr5-live.icecast.wdr.de/wdr/wdr5/live/mp3/128/stream.mp3";
+		public Chassis Chassis { get; private set; } = chassis;
+		private const string TestStreamUrl = "http://media-ice.musicradio.com/CapitalMP3";// "http://100radio-80.ice.infomaniak.ch/100radio-80-128.mp3";// "http://wdr-wdr5-live.icecast.wdr.de/wdr/wdr5/live/mp3/128/stream.mp3";
 		public const string TestStationName = "Bremen Zwei";
 		public const string TestStationFormat = "MP3 128 kbit/s";
 		private volatile bool linkReady = false;
@@ -25,60 +24,9 @@ namespace THERadioReceiver
 
 		public void Initialize()
 		{
-			gpioController = chassis.Board.GpioController;
-			gpioExpander = chassis.Board.GpioExpander;
-
-			var networkController = NetworkController.FromName( SC20100.NetworkController.Enc28j60 );
-
-			var cs = gpioController.OpenPin( Board.ControllerPin.EthernetCS );
-
-			var spiSettings = new SpiConnectionSettings
-			{
-				ChipSelectLine = cs,
-				ClockFrequency = 4_000_000,
-				Mode = SpiMode.Mode0,
-				ChipSelectType = SpiChipSelectType.Gpio,
-				ChipSelectHoldTime = TimeSpan.FromTicks( 10 ),
-				ChipSelectSetupTime = TimeSpan.FromTicks( 10 ),
-			};
-
-			var networkCommunicationInterfaceSettings = new SpiNetworkCommunicationInterfaceSettings
-			{
-				SpiApiName = FEZFeather.SpiBus.Spi4,
-				GpioApiName = SC20100.GpioPin.Id,
-				SpiSettings = spiSettings,
-				InterruptPin = gpioController.OpenPin( Board.ControllerPin.EthernetINT ),
-				InterruptEdge = GpioPinEdge.FallingEdge,
-				InterruptDriveMode = GpioPinDriveMode.InputPullUp,
-				ResetPin = gpioController.OpenPin( Board.ControllerPin.EthernetReset ),
-				ResetActiveState = GpioPinValue.Low,
-			};
-
-			var networkInterfaceSetting = new EthernetNetworkInterfaceSettings
-			{
-				Address = new IPAddress( [ 192, 168, 1, 53 ] ),
-				SubnetMask = new IPAddress( [ 255, 255, 255, 0 ] ),
-				GatewayAddress = new IPAddress( [ 192, 168, 1, 1 ] ),
-				DnsAddresses = [ new( [ 192, 168, 1, 1 ] ), new( [ 192, 168, 1, 254 ] ), ],
-				MacAddress = [ 0x00, 0x04, 0x00, 0x00, 0x00, 0x00 ],
-				DhcpEnable = false,
-				DynamicDnsEnable = false
-			};
-
-			networkController.SetInterfaceSettings( networkInterfaceSetting );
-			networkController.SetCommunicationInterfaceSettings( networkCommunicationInterfaceSettings );
-			networkController.SetAsDefaultController();
-
-			networkController.NetworkAddressChanged += NetworkController_NetworkAddressChanged; ;
-			networkController.NetworkLinkConnectedChanged += NetworkController_NetworkLinkConnectedChanged; ;
-
-			networkController.Enable();
-
-			while( !linkReady )
-			{
-				Thread.Sleep( 10 );
-			}
-			Debug.WriteLine( "Network is ready to use" );
+			gpioController = Chassis.Board.GpioController;
+			gpioExpander = Chassis.Board.GpioExpander;
+		
 		}
 
 		public void StartPlayback( Vs1053 codec )
@@ -92,7 +40,7 @@ namespace THERadioReceiver
 
 			try
 			{
-				codec.StartBufferedStream( source );
+				codec.StartBufferedStream( source, loadStandardCodecPatch: false );
 			}
 			catch
 			{
@@ -146,12 +94,25 @@ namespace THERadioReceiver
 
 					if( currentResponse.StatusCode == HttpStatusCode.OK )
 					{
-						Debug.WriteLine( "Radio stream content type: " + currentResponse.ContentType );
+						Debug.WriteLine( "Radio stream content type: " + currentResponse.ContentType ); Debug.WriteLine( "=== Stream Headers ===" );
+
+						foreach( var header in currentResponse.Headers.AllKeys )
+						{
+							Debug.WriteLine(
+								$"{header} = {currentResponse.Headers[header]}"
+							);
+
+							foreach( var value in currentResponse.Headers.GetValues( header ) )
+							{
+								Debug.WriteLine( $"  {value}" );
+							}
+						}
 
 						if( currentResponse.ContentType == null || currentResponse.ContentType.ToLower().IndexOf( "audio/mpeg" ) != 0 )
 						{
 							throw new InvalidOperationException( "Radio stream did not return MP3 audio." );
 						}
+
 						return currentResponse.GetResponseStream();
 					}
 
@@ -235,18 +196,6 @@ namespace THERadioReceiver
 					}
 				}
 			}
-		}
-
-		private void NetworkController_NetworkLinkConnectedChanged( NetworkController sender, NetworkLinkConnectedChangedEventArgs e )
-		{
-			linkReady = e.Connected;
-			Debug.WriteLine( "Network link connected changed: " + e.Connected );
-
-		}
-
-		private void NetworkController_NetworkAddressChanged( NetworkController sender, NetworkAddressChangedEventArgs e )
-		{
-			Debug.WriteLine( "Network address changed: " + e.Timestamp.ToString() );
 		}
 	}
 }

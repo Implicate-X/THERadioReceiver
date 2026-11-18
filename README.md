@@ -36,7 +36,7 @@ Retro electronics meet modern .NET runtime.
 
 The band control switches between FM and the MP3 endpoint in `WebRadio.TestStreamUrl`. Each playback starts from that stable station URL and follows up to four HTTP redirects with absolute HTTP or HTTPS locations; HTTPS-to-HTTP redirects are rejected. The final response is used directly for playback, so temporary stream URLs are not reused. Network audio uses the VS1053 buffered playback path, including its 32 KB prefill, so playback starts after buffering. Switching back to FM cancels the HTTP request. The display shows the configured test station name and format from `WebRadio`; these values must be updated if the endpoint changes. Live track metadata is not yet requested or displayed. Stream connection and playback errors are reported in the debug output; automatic reconnection is not yet implemented.
 
-The standard VS1053 patch is loaded during codec initialization and restarted without another upload for subsequent streams. A decoder reset or a switch to a different patch variant requires uploading the appropriate patch again.
+The VS1053 standard codec patch can be skipped during initialization and streaming with `loadStandardCodecPatch: false`. The web radio uses this option because its stream is MP3, which the decoder supports without a patch; other playback callers retain the default patch-loading behavior. A decoder reset or a switch to a format that requires a patch requires loading the appropriate patch before playback.
 
 ## 🔧 Hardware Architecture
 The main board, version 3.2, integrates:

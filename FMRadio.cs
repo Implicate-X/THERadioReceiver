@@ -17,6 +17,7 @@ namespace THERadioReceiver
 	/// <param name="chassis">The chassis providing the board's I2C and GPIO controllers.</param>
 	public sealed class FmRadio( Chassis chassis )
 	{
+		public Chassis Chassis { get; private set; } = chassis;
 		/// <summary>
 		/// Gets the tuner module.
 		/// </summary>
@@ -80,9 +81,9 @@ namespace THERadioReceiver
 		/// </summary>
 		public void Initialize()
 		{
-			i2cController = chassis.Board.I2cController;
-			gpioController = chassis.Board.GpioController;
-			gpioExpander = chassis.Board.GpioExpander;
+			i2cController = Chassis.Board.I2cController;
+			gpioController = Chassis.Board.GpioController;
+			gpioExpander = Chassis.Board.GpioExpander;
 
 			#region Initialize TEF6686 FM Tuner
 			tunerResPin = gpioExpander.OpenPin( Board.ExpanderPin.TunerReset );
@@ -102,7 +103,7 @@ namespace THERadioReceiver
 
 			RdsSubSystem = TunerModule.CreateRdsSubSystem( dataAvailableActiveHigh: false );
 			RdsSubSystem.Start();
-			fmRadioDisplay = new( chassis.Panel.VFDisplay, RdsSubSystem );
+			fmRadioDisplay = new( Chassis.Panel.VFDisplay, RdsSubSystem );
 
 			infoThreadRunning = true;
 			infoThread = new Thread( InfoThread );
@@ -246,9 +247,9 @@ namespace THERadioReceiver
 		/// </param>
 		private void UpdateIndicatorLeds( bool hasRdsInfo )
 		{
-			SetIndicator( chassis.Panel.TunedLedPin, hasTunedSignal );
-			SetIndicator( chassis.Panel.StereoLedPin, hasTunedSignal && hasStereoSignal );
-			SetIndicator( chassis.Panel.RdsLedPin, hasRdsInfo );
+			SetIndicator( Chassis.Panel.TunedLedPin, hasTunedSignal );
+			SetIndicator( Chassis.Panel.StereoLedPin, hasTunedSignal && hasStereoSignal );
+			SetIndicator( Chassis.Panel.RdsLedPin, hasRdsInfo );
 		}
 
 		/// <summary>

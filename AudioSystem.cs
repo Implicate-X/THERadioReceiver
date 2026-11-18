@@ -15,6 +15,7 @@ namespace THERadioReceiver
 	/// <param name="chassis">Provides the board hardware and FM and web radio services.</param>
 	public sealed class AudioSystem( Chassis chassis )
 	{
+		public Chassis Chassis { get; private set; } = chassis;
 		private GpioController gpioController = null!;
 		private Mcp23017 gpioExpander = null!;
 		public Vs1053 StreamPlayer { get; private set; } = null!;
@@ -36,8 +37,8 @@ namespace THERadioReceiver
 		/// </remarks>
 		public void Initialize()
 		{
-			gpioController = chassis.Board.GpioController;
-			gpioExpander = chassis.Board.GpioExpander;
+			gpioController = Chassis.Board.GpioController;
+			gpioExpander = Chassis.Board.GpioExpander;
 
 			SwitchPin = gpioExpander.OpenPin( Board.ExpanderPin.AudioSwitch );
 			SwitchPin.SetDriveMode( GpioPinDriveMode.Output );
@@ -51,7 +52,7 @@ namespace THERadioReceiver
 				dreqPinID: Board.ControllerPin.CodecDREQ,
 				resetPinID: Board.ControllerPin.CodecReset );
 
-			StreamPlayer.Initialize();
+			StreamPlayer.Initialize( loadStandardCodecPatch: false );
 			StreamPlayer.ConfigureStreamingTuning( chunkSize: 32, dataSpiFrequency: 5_000_000 );
 
 			Vs1053.DreqPollIntervalMilliseconds = 1;
@@ -128,18 +129,18 @@ namespace THERadioReceiver
 		{
 			if( !isWebRadioActive )
 			{
-				chassis.FMRadio.PauseForExternalAudio();
+				Chassis.FMRadio.PauseForExternalAudio();
 				isWebRadioActive = true;
 
-				chassis.Panel.VFDisplay.SetLines( WebRadio.TestStationName, WebRadio.TestStationFormat );
+				Chassis.Panel.VFDisplay.SetLines( WebRadio.TestStationName, WebRadio.TestStationFormat );
 
 				SwitchPin.Write( GpioPinValue.Low );
 
-				chassis.FMRadio.SetAudioMute( mute: true );
+				Chassis.FMRadio.SetAudioMute( mute: true );
 
 				try
 				{
-					chassis.WebRadio.StartPlayback( StreamPlayer );
+					Chassis.WebRadio.StartPlayback( StreamPlayer );
 				}
 				catch
 				{
@@ -169,10 +170,10 @@ namespace THERadioReceiver
 		{
 			SwitchPin.Write( GpioPinValue.High );
 
-			chassis.FMRadio.SetAudioMute( mute: false );
+			Chassis.FMRadio.SetAudioMute( mute: false );
 			isWebRadioActive = false;
 
-			chassis.FMRadio.ResumeAfterExternalAudio();
+			Chassis.FMRadio.ResumeAfterExternalAudio();
 
 			Debug.WriteLine( "Band: switched to FM tuner" );
 		}
