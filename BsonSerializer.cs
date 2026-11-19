@@ -21,7 +21,7 @@ namespace THERadioReceiver
 			JObject root = new();
 
 			root.Add( "value", token );
-			
+
 			return WriteDocument( root );
 		}
 
@@ -37,11 +37,11 @@ namespace THERadioReceiver
 		{
 			if( data == null ) throw new ArgumentNullException( nameof( data ) );
 			if( targetType == null ) throw new ArgumentNullException( nameof( targetType ) );
-		
+
 			int offset = 0;
 
 			JObject root = ReadDocument( data, ref offset, data.Length );
-			
+
 			if( offset != data.Length || root.Members.Count != 1 || !root.Contains( "value" ) )
 				throw new FormatException( "Invalid BSON persistence document." );
 
@@ -74,10 +74,10 @@ namespace THERadioReceiver
 			using MemoryStream result = new();
 
 			WriteInt32( result, checked(contents.Length + 5) );
-			
+
 			result.Write( contents, 0, contents.Length );
 			result.WriteByte( 0 );
-			
+
 			return result.ToArray();
 		}
 
@@ -94,43 +94,55 @@ namespace THERadioReceiver
 			byte type;
 			object value = token is JValue scalar ? scalar.Value : null!;
 
-			if( token is JObject ) type = 0x03;
-			else if( token is JArray ) type = 0x04;
-			else if( !( token is JValue ) ) throw new FormatException( "Unsupported BSON token." );
-			else if( value == null ) type = 0x0A;
-			else if( value is string ) type = 0x02;
-			else if( value is bool ) type = 0x08;
-			else if( value is int ) type = 0x10;
-			else if( value is long ) type = 0x12;
-			else if( value is ulong unsignedValue )
+			(type, value) = token switch
 			{
-				if( unsignedValue > long.MaxValue ) throw new NotSupportedException( "BSON cannot represent unsigned values above Int64.MaxValue." );
-				value = ( long )unsignedValue;
-				type = 0x12;
-			}
-			else if( value is double ) type = 0x01;
-			else throw new NotSupportedException( "Unsupported BSON value: " + value.GetType().FullName );
+				JObject => (( byte )BsonTypes.BsonDocument, ( object )token),
+				JArray => (( byte )BsonTypes.BsonArray, ( object )token),
+				JValue { Value: null } => (( byte )BsonTypes.BsonNull, null!),
+				JValue { Value: string } => (( byte )BsonTypes.BsonString, value),
+				JValue { Value: bool } => (( byte )BsonTypes.BsonBoolean, value),
+				JValue { Value: int } => (( byte )BsonTypes.BsonInt32, value),
+				JValue { Value: long } => (( byte )BsonTypes.BsonInt64, value),
+				JValue { Value: ulong unsignedValue } when unsignedValue <= long.MaxValue => (( byte )BsonTypes.BsonInt64, ( object )( long )unsignedValue),
+				JValue { Value: double } => (( byte )BsonTypes.BsonDouble, value),
+				_ => throw new NotSupportedException( "Unsupported BSON value: " + value?.GetType().FullName )
+			};
 
 			stream.WriteByte( type );
+
 			WriteCString( stream, name );
+
 			switch( type )
 
 			{
-				case 0x03:
-				case 0x04:
+				case ( byte )BsonTypes.BsonDocument:
+				case ( byte )BsonTypes.BsonArray:
 					byte[] child = WriteDocument( token );
 					stream.Write( child, 0, child.Length );
 					break;
-				case 0x02:
+
+				case ( byte )BsonTypes.BsonString:
 					byte[] text = Encoding.UTF8.GetBytes( ( string )value );
-					WriteInt32( stream, checked( text.Length + 1 ) );
+					WriteInt32( stream, checked(text.Length + 1) );
 					stream.Write( text, 0, text.Length );
 					stream.WriteByte( 0 );
 					break;
-				case 0x08: stream.WriteByte( ( bool )value ? ( byte )1 : ( byte )0 ); break;
-				case 0x10: WriteInt32( stream, ( int )value ); break;
-				case 0x12: WriteInt64( stream, ( long )value ); break;
-				case 0x01: WriteInt64( stream, BitConverter.DoubleToInt64Bits( ( double )value ) ); break;
+
+				case ( byte )BsonTypes.BsonBoolean:
+					stream.WriteByte( ( bool )value ? ( byte )1 : ( byte )0 );
+					break;
+
+				case ( byte )BsonTypes.BsonInt32:
+					WriteInt32( stream, ( int )value );
+					break;
+
+				case ( byte )BsonTypes.BsonInt64:
+					WriteInt64( stream, ( long )value );
+					break;
+
+				case ( byte )BsonTypes.BsonDouble:
+					WriteInt64( stream, BitConverter.DoubleToInt64Bits( ( double )value ) );
+					break;
 			}
 		}
 
@@ -143,7 +155,9 @@ namespace THERadioReceiver
 		private static void WriteCString( MemoryStream stream, string value )
 		{
 			if( value.IndexOf( '\0' ) >= 0 ) throw new FormatException( "BSON names cannot contain null characters." );
+
 			byte[] bytes = Encoding.UTF8.GetBytes( value );
+			
 			stream.Write( bytes, 0, bytes.Length );
 			stream.WriteByte( 0 );
 		}
@@ -182,23 +196,26 @@ namespace THERadioReceiver
 		{
 			int start = offset;
 			int length = ReadInt32( data, ref offset, limit );
+
 			if( length < 5 || length > limit - start ) throw new FormatException( "Invalid BSON document length." );
+			
 			int end = start + length;
 
 			JObject result = new();
-			
+
 			while( offset < end - 1 )
 			{
 				byte type = data[ offset++ ];
+
 				string name = ReadCString( data, ref offset, end - 1 );
 
 				if( result.Contains( name ) ) throw new FormatException( "Duplicate BSON member: " + name );
-				
+
 				result.Add( name, ReadValue( data, ref offset, end - 1, type ) );
 			}
-			
+
 			if( offset != end - 1 || data[ offset++ ] != 0 ) throw new FormatException( "Invalid BSON document terminator." );
-			
+
 			return result;
 		}
 
@@ -215,32 +232,44 @@ namespace THERadioReceiver
 		{
 			switch( type )
 			{
-				case 0x03: return ReadDocument( data, ref offset, limit );
-				case 0x04:
+				case ( byte )BsonTypes.BsonDocument: return ReadDocument( data, ref offset, limit );
+				case ( byte )BsonTypes.BsonArray:
 					JObject items = ReadDocument( data, ref offset, limit );
 					JToken[] values = new JToken[ items.Members.Count ];
+
 					int index = 0;
+					
 					foreach( JProperty item in items.Members )
 					{
 						if( item.Name != index.ToString() ) throw new FormatException( "Invalid BSON array index." );
 						values[ index++ ] = item.Value;
 					}
+					
 					return new JArray( values );
-				case 0x02:
+
+				case ( byte )BsonTypes.BsonString:
 					int length = ReadInt32( data, ref offset, limit );
+					
 					if( length < 1 || length > limit - offset || data[ offset + length - 1 ] != 0 ) throw new FormatException( "Invalid BSON string." );
+					
 					string text = Encoding.UTF8.GetString( data, offset, length - 1 );
 					offset += length;
+
 					return new JValue( text );
-				case 0x08:
+
+				case ( byte )BsonTypes.BsonBoolean:
 					RequireBytes( offset, 1, limit );
+
 					byte boolean = data[ offset++ ];
+					
 					if( boolean > 1 ) throw new FormatException( "Invalid BSON boolean." );
+					
 					return new JValue( boolean == 1 );
-				case 0x0A: return new JValue();
-				case 0x10: return new JValue( ReadInt32( data, ref offset, limit ) );
-				case 0x12: return new JValue( ReadInt64( data, ref offset, limit ) );
-				case 0x01: return new JValue( BitConverter.Int64BitsToDouble( ReadInt64( data, ref offset, limit ) ) );
+
+				case ( byte )BsonTypes.BsonNull: return new JValue();
+				case ( byte )BsonTypes.BsonInt32: return new JValue( ReadInt32( data, ref offset, limit ) );
+				case ( byte )BsonTypes.BsonInt64: return new JValue( ReadInt64( data, ref offset, limit ) );
+				case ( byte )BsonTypes.BsonDouble: return new JValue( BitConverter.Int64BitsToDouble( ReadInt64( data, ref offset, limit ) ) );
 				default: throw new FormatException( "Unsupported BSON element type: " + type );
 			}
 		}
@@ -258,12 +287,12 @@ namespace THERadioReceiver
 			int start = offset;
 
 			while( offset < limit && data[ offset ] != 0 ) offset++;
-			
+
 			if( offset == limit ) throw new FormatException( "Missing BSON name terminator." );
-			
+
 			string value = Encoding.UTF8.GetString( data, start, offset - start );
 			offset++;
-			
+
 			return value;
 		}
 
@@ -280,7 +309,7 @@ namespace THERadioReceiver
 
 			int value = data[ offset ] | data[ offset + 1 ] << 8 | data[ offset + 2 ] << 16 | data[ offset + 3 ] << 24;
 			offset += 4;
-			
+
 			return value;
 		}
 
@@ -296,11 +325,11 @@ namespace THERadioReceiver
 			RequireBytes( offset, 8, limit );
 
 			long value = 0;
-			
+
 			for( int i = 0; i < 8; i++ ) value |= ( long )data[ offset + i ] << ( i * 8 );
-			
+
 			offset += 8;
-			
+
 			return value;
 		}
 

@@ -28,21 +28,17 @@ namespace THERadioReceiver
 	/// <summary>
 	/// Saves and loads serialized persistent records using the configured storage and serializer.
 	/// </summary>
-	public sealed class Persistence
+	public sealed class Persistence( IStorage storage, ISerializer serializer )
 	{
-		private readonly IStorage storage;
-		private readonly ISerializer serializer;
-
-		public Persistence( IStorage storage, ISerializer serializer )
-		{
-			this.storage = storage ?? throw new ArgumentNullException( nameof( storage ) );
-			this.serializer = serializer ?? throw new ArgumentNullException( nameof( serializer ) );
-		}
+		private readonly IStorage storage = storage ?? throw new ArgumentNullException( nameof( storage ) );
+		private readonly ISerializer serializer = serializer ?? throw new ArgumentNullException( nameof( serializer ) );
 
 		public void Save( string name, object value )
 		{
 			ValidateName( name );
+			
 			if( value == null ) throw new ArgumentNullException( nameof( value ) );
+			
 			storage.Write( name, serializer.Serialize( value ) );
 		}
 
@@ -50,23 +46,29 @@ namespace THERadioReceiver
 		{
 			if( !TryLoad( name, targetType, out object value ) )
 				throw new InvalidOperationException( "Persistent record not found: " + name );
-			return value;
+			
+				return value;
 		}
 
 		public bool TryLoad( string name, Type targetType, out object value )
 		{
 			ValidateName( name );
+
 			if( targetType == null ) throw new ArgumentNullException( nameof( targetType ) );
+			
 			byte[] data = storage.Read( name );
+			
 			if( data == null )
 			{
 				value = null!;
 				return false;
 			}
 			value = serializer.Deserialize( data, targetType );
+			
 			if( value == null || !targetType.IsInstanceOfType( value ) )
 				throw new InvalidOperationException( "Invalid persistent record: " + name );
-			return true;
+			
+				return true;
 		}
 
 		internal static void ValidateName( string name )
@@ -98,6 +100,7 @@ namespace THERadioReceiver
 			lock( sync )
 			{
 				byte[] data = ( byte[] )records[ name ];
+
 				return data == null ? null! : Copy( data );
 			}
 		}
