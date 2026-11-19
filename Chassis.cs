@@ -43,11 +43,16 @@ namespace THERadioReceiver
 		public Settings Settings { get; private set; } = null!;
 
 		/// <summary>
-		/// Creates the chassis components and initializes them.
+		/// Creates the chassis with volatile dummy storage and initializes it.
 		/// </summary>
-		public Chassis()
+		public Chassis() : this( new Persistence( new FramStorageDummy(), new BsonSerializer() ) )
 		{
-			Settings = new();
+		}
+
+		/// <summary>Creates the chassis with the specified persistence configuration.</summary>
+		public Chassis( Persistence persistence )
+		{
+			Settings = new( persistence );
 
 			Board = new();
 			Panel = new( this );

@@ -266,6 +266,12 @@ Characteristics:
 
 The project demonstrates how far modern embedded development can be pushed using a unified .NET environment.
 
+### Settings persistence
+
+`Persistence` combines an `ISerializer` with an `IStorage`; callers save named objects without depending on a format or medium. `Load` and `TryLoad` take an explicit target `Type` because TinyCLR can erase generic type arguments. A missing record is distinct from a storage or deserialization failure, which is propagated to the caller. The JSON and BSON serializers use the TinyCLR JSON object mapping; deserialize only trusted data. They are intended for objects and arrays supported by that mapping, not arbitrary .NET types. The BSON serializer wraps the object or array in a BSON document under the `value` member; unsigned integers above `Int64.MaxValue` cannot be represented.
+
+The default chassis configuration currently combines BSON with `FramStorageDummy`. The dummy retains independent byte copies only for the lifetime of that instance; it does not access FRAM and loses data on restart. A missing Ethernet record uses the existing defaults. Settings are saved when `Chassis.Dispose()` is called; the current main loop does not dispose the chassis automatically. A real FRAM driver and a persistent storage layout remain future work. Changing a serializer or medium does not automatically migrate existing records.
+
 ## 🎛 Modules & Drivers
 
 Already stable in isolated test setups:

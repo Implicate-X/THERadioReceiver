@@ -50,11 +50,13 @@
   <ItemGroup>
     <Compile Include="AudioSystem.cs" />
     <Compile Include="Board.cs" />
+    <Compile Include="BsonSerializer.cs" />
     <Compile Include="Chassis.cs" />
     <Compile Include="Ethernet.cs" />
     <Compile Include="FmRadio.cs" />
     <Compile Include="FmRadioDisplay.cs" />
     <Compile Include="Panel.cs" />
+    <Compile Include="Persistence.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings.cs" />

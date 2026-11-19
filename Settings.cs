@@ -1,36 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
-using System.Reflection;
-using GHIElectronics.TinyCLR.Data.Json;
 using GHIElectronics.TinyCLR.Devices.Network;
 
 namespace THERadioReceiver
 {
-	/// <summary>
-	/// Loads <see cref="Settings"/> data from JSON.
-	/// </summary>
-	public static class JsonHelper
+	/// <summary>Holds the radio receiver settings.</summary>
+	public sealed class Settings( Persistence persistence )
 	{
-		/// <summary>
-		/// Deserializes the specified JSON text into a <see cref="Settings"/> instance.
-		/// </summary>
-		/// <param name="json">The JSON text to deserialize.</param>
-		/// <returns>The deserialized settings.</returns>
-		public static Settings Load( string json ) => ( Settings )JsonConverter.DeserializeObject( json, typeof( Settings ) );
-	}
+		private readonly Persistence persistence = persistence ?? throw new ArgumentNullException( nameof( persistence ) );
 
-	[Serializable]
-	/// <summary>
-	/// Holds the radio receiver settings used for JSON serialization and deserialization.
-	/// </summary>
-	public sealed class Settings
-	{
 		public EthernetNetworkInterfaceSettings EthernetSettings { get; private set; } = null!;
 
 		public void Load()
 		{
+			if( persistence.TryLoad( nameof( EthernetSettings ), typeof( EthernetNetworkInterfaceSettings ), out object value ) )
+			{
+				EthernetSettings = ( EthernetNetworkInterfaceSettings )value;
+				return;
+			}
+
+			Debug.WriteLine( "Ethernet settings not found; using defaults." );
+
 			EthernetSettings = new EthernetNetworkInterfaceSettings
 			{
 				Address = new IPAddress( [ 192, 168, 1, 53 ] ),
@@ -41,35 +32,11 @@ namespace THERadioReceiver
 				DhcpEnable = false,
 				DynamicDnsEnable = false
 			};
-
-			try
-			{
-				JToken jTokenIn = JsonConverter.Serialize( this, new JsonSerializerSettings
-				{
-					TypeNameHandling = TypeNameHandling.Auto
-				} );
-
-				Debug.WriteLine( $"Serial Input:\n{jTokenIn.ToString()}" );
-
-				JToken jTokenOut = JsonConverter.Deserialize( jTokenIn.ToString() );
-
-				Debug.WriteLine( $"Serial Output:\n{jTokenOut.ToString()}" );
-
-				var settings = JsonHelper.Load( jTokenOut.ToString() );
-
-				if( settings.EthernetSettings == null )
-					throw new Exception( "Deserialized settings do not contain EthernetSettings." );
-
-				Debug.WriteLine( $"Deserialized settings:\n{JsonConverter.Serialize( settings )}" );
-			}
-			catch( Exception ex )
-			{
-				Debug.WriteLine( "Serialization error: " + ex.Message );
-			}
 		}
 
 		public void Save()
 		{
+			persistence.Save( nameof( EthernetSettings ), EthernetSettings );
 		}
 	}
 }
