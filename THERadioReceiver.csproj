@@ -55,6 +55,8 @@
     <Compile Include="Ethernet.cs" />
     <Compile Include="FmRadio.cs" />
     <Compile Include="FmRadioDisplay.cs" />
+    <Compile Include="JsonSerializer.cs" />
+    <Compile Include="NetworkSettingsMenu.cs" />
     <Compile Include="Panel.cs" />
     <Compile Include="Persistence.cs" />
     <Compile Include="Program.cs" />

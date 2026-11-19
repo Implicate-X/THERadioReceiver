@@ -135,6 +135,12 @@ Switching back to FM cancels the HTTP request.
 
 The display shows the configured test station name and format from `WebRadio`; these values must be updated if the endpoint changes.
 
+## 🌐 Network Settings
+
+Press the front-panel **MENU** button to edit the device IP address, subnet mask, and gateway IP in that order. Press **MENU** again to exit without saving. The selected digit blinks on the second display line. The remote's tuner channel buttons enter digits 1–9; **Tuner Channel 10** enters 0. **TUNING +/−** moves between digits, **PRESET +/−** selects an address, **DISPLAY** advances to the next address, and **AUTO/MANU** enters 0 at the selected digit. Press **MEMORY** to save all three addresses, or **SHIFT** to discard changes. The **BAND** button has no effect while editing.
+
+Addresses are shown as four three-digit octets. Octet values above 255 are rejected, and the settings are persisted only when MEMORY is pressed.
+
 Live track metadata is not yet requested or displayed.
 
 Stream connection and playback errors are reported in the debug output; automatic reconnection is not yet implemented.

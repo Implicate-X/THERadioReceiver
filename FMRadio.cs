@@ -37,7 +37,7 @@ namespace THERadioReceiver
 		/// Changing this property does not tune the radio; use <see cref="ApplyTune"/>
 		/// or tune the tuner directly to apply a new frequency.
 		/// </remarks>
-		public ushort TuneFrequency { get; set; } = 10130;
+		public ushort TuneFrequency { get; set; } = 9920;
 
 		/// <summary>
 		/// Gets the RDS subsystem.
@@ -58,6 +58,8 @@ namespace THERadioReceiver
 		/// <remarks>The event is initially signaled.</remarks>
 		private readonly ManualResetEvent infoThreadResume = new( true );
 		private bool infoThreadPaused = false;
+		private bool externalAudioPaused;
+		private bool networkSettingsPaused;
 		/// <summary>
 		/// The FM radio display.
 		/// </summary>
@@ -270,13 +272,7 @@ namespace THERadioReceiver
 		/// <remarks>Clears the radio display before returning.</remarks>
 		public void PauseForExternalAudio()
 		{
-			lock( infoThreadSync )
-			{
-				infoThreadPaused = true;
-				infoThreadResume.Reset();
-			}
-
-			RdsSubSystem.Stop();
+			SetPauseState( externalAudio: true, paused: true );
 			fmRadioDisplay.Clear();
 		}
 
@@ -285,12 +281,53 @@ namespace THERadioReceiver
 		/// </summary>
 		public void ResumeAfterExternalAudio()
 		{
-			RdsSubSystem.Start();
+			SetPauseState( externalAudio: true, paused: false );
+		}
 
+		/// <summary>Pauses RDS reception and information updates while network settings are edited.</summary>
+		public void PauseForNetworkSettings()
+		{
+			SetPauseState( externalAudio: false, paused: true );
+		}
+
+		/// <summary>Resumes RDS reception and information updates after network settings are closed.</summary>
+		public void ResumeAfterNetworkSettings()
+		{
+			SetPauseState( externalAudio: false, paused: false );
+		}
+
+		private void SetPauseState( bool externalAudio, bool paused )
+		{
 			lock( infoThreadSync )
 			{
-				infoThreadPaused = false;
-				infoThreadResume.Set();
+				if( externalAudio )
+				{
+					externalAudioPaused = paused;
+				}
+				else
+				{
+					networkSettingsPaused = paused;
+				}
+
+				bool shouldPause = externalAudioPaused || networkSettingsPaused;
+
+				if( shouldPause == infoThreadPaused )
+				{
+					return;
+				}
+
+				infoThreadPaused = shouldPause;
+
+				if( shouldPause )
+				{
+					infoThreadResume.Reset();
+					RdsSubSystem.Stop();
+				}
+				else
+				{
+					RdsSubSystem.Start();
+					infoThreadResume.Set();
+				}
 			}
 		}
 

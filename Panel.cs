@@ -1,5 +1,7 @@
-﻿using System.Threading;
+﻿using System;
 using System.Diagnostics;
+using System.Net;
+using System.Threading;
 using GHIElectronics.TinyCLR.Devices.Gpio;
 using GHIElectronics.TinyCLR.Devices.I2c;
 using ImplicateX.TinyCLR.Drivers.Display;
@@ -40,6 +42,9 @@ namespace THERadioReceiver
 		/// <summary>Gets the infrared remote-control decoder.</summary>
 		public BinaryDistanceDecoder BDDecoder { get; private set; } = null!;
 
+		/// <summary>Gets the network settings menu.</summary>
+		public NetworkSettingsMenu NetworkMenu { get; private set; } = null!;
+
 		/// <summary>
 		/// Opens and configures the display, front-panel keys and indicators,
 		/// quadrature decoder, and infrared remote-control input.
@@ -60,6 +65,7 @@ namespace THERadioReceiver
 
 			VFDisplay.SetScrollDelay( 150 );
 			VFDisplay.SetLines( "THE Radio Receiver", "Initializing..." );
+			NetworkMenu = new( Chassis.Settings, VFDisplay, Chassis.FMRadio.PauseForNetworkSettings, Chassis.FMRadio.ResumeAfterNetworkSettings );
 
 			Thread vfdThread = new( () => VFDisplay.Run() )
 			{
@@ -97,7 +103,7 @@ namespace THERadioReceiver
 			{
 				if( args.Edge == GpioPinEdge.FallingEdge )
 				{
-					Debug.WriteLine( $"Key Menu pin value changed to: {args.Edge}" );
+					NetworkMenu.HandleMenuKey();
 				}
 			};
 
@@ -172,6 +178,13 @@ namespace THERadioReceiver
 			BinaryDistanceDecoder.Code.DENON.TryGetValue( arg.RawValue, out string commandName );
 
 			ushort tuneFrequency10kHz = ( ushort )( Chassis.FMRadio.TuneFrequency );
+			Debug.WriteLine( $"IR command received: {commandName} (raw: 0x{arg.RawValue:X4})" );
+
+			if( NetworkMenu.IsActive )
+			{
+				NetworkMenu.HandleRemoteCommand( commandName );
+				return;
+			}
 
 			_ = ( commandName ) switch
 			{
@@ -187,6 +200,5 @@ namespace THERadioReceiver
 
 			Debug.WriteLine( $"IR command received: {commandName} (raw: 0x{arg:X4})" );
 		}
-
 	}
 }
