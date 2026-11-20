@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="packages\GHIElectronics.TinyCLR.RegularExpressions.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.RegularExpressions.props" Condition="Exists('packages\GHIElectronics.TinyCLR.RegularExpressions.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.RegularExpressions.props')" />
   <Import Project="packages\GHIElectronics.TinyCLR.Devices.Network.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.Devices.Network.props" Condition="Exists('packages\GHIElectronics.TinyCLR.Devices.Network.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.Devices.Network.props')" />
   <Import Project="packages\GHIElectronics.TinyCLR.Networking.Http.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.Networking.Http.props" Condition="Exists('packages\GHIElectronics.TinyCLR.Networking.Http.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.Networking.Http.props')" />
   <Import Project="packages\GHIElectronics.TinyCLR.Networking.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.Networking.props" Condition="Exists('packages\GHIElectronics.TinyCLR.Networking.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.Networking.props')" />
@@ -142,6 +143,9 @@
     <Reference Include="GHIElectronics.TinyCLR.Networking.Http, Version=3.0.2.3000, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\GHIElectronics.TinyCLR.Networking.Http.3.0.2.3000\lib\net48\GHIElectronics.TinyCLR.Networking.Http.dll</HintPath>
     </Reference>
+    <Reference Include="GHIElectronics.TinyCLR.RegularExpressions, Version=3.0.2.3000, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\GHIElectronics.TinyCLR.RegularExpressions.3.0.2.3000\lib\net48\GHIElectronics.TinyCLR.RegularExpressions.dll</HintPath>
+    </Reference>
     <Reference Include="System.Device.Gpio, Version=3.0.2.3000, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\GHIElectronics.TinyCLR.Devices.Gpio.3.0.2.3000\lib\net48\System.Device.Gpio.dll</HintPath>
     </Reference>
@@ -174,5 +178,6 @@
     <Error Condition="!Exists('packages\GHIElectronics.TinyCLR.Networking.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.Networking.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\GHIElectronics.TinyCLR.Networking.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.Networking.props'))" />
     <Error Condition="!Exists('packages\GHIElectronics.TinyCLR.Networking.Http.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.Networking.Http.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\GHIElectronics.TinyCLR.Networking.Http.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.Networking.Http.props'))" />
     <Error Condition="!Exists('packages\GHIElectronics.TinyCLR.Devices.Network.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.Devices.Network.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\GHIElectronics.TinyCLR.Devices.Network.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.Devices.Network.props'))" />
+    <Error Condition="!Exists('packages\GHIElectronics.TinyCLR.RegularExpressions.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.RegularExpressions.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\GHIElectronics.TinyCLR.RegularExpressions.3.0.2.3000\build\net48\GHIElectronics.TinyCLR.RegularExpressions.props'))" />
   </Target>
 </Project>

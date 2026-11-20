@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Threading;
+using System.Text.RegularExpressions;
 using ImplicateX.TinyCLR.Drivers.Display;
 
 namespace THERadioReceiver
@@ -88,46 +89,14 @@ namespace THERadioReceiver
 
 				Action commandAction = commandName switch
 				{
-					"Tuner Preset +" => () => SelectField( selectedField + 1 ),
-					"Tuner Preset -" => () => SelectField( selectedField - 1 ),
-					"Tuning +" => () => MoveCursor( 1 ),
-					"Tuning -" => () => MoveCursor( -1 ),
-					"Tuner Auto/Manu" => () => SetDigit( 0 ),
-					"Tuner Memory" => () =>
-					{
-						Save();
-						return;
-					}
-					,
-					"Tuner Shift" => () =>
-					{
-						isActive = false;
-						editingStopped();
-						return;
-					}
-					,
-					_ => () =>
-					{
-						int digit = commandName switch
-						{
-							"Tuner Channel 1" => 1,
-							"Tuner Channel 2" => 2,
-							"Tuner Channel 3" => 3,
-							"Tuner Channel 4" => 4,
-							"Tuner Channel 5" => 5,
-							"Tuner Channel 6" => 6,
-							"Tuner Channel 7" => 7,
-							"Tuner Channel 8" => 8,
-							"Tuner Channel 9" => 9,
-							"Tuner Channel 10" => 0,
-							_ => -1
-						};
-
-						if( digit >= 0 )
-						{
-							SetDigit( digit );
-						}
-					}
+					"Tuner Preset +"	=> () => SelectField( selectedField + 1 ),
+					"Tuner Preset -"	=> () => SelectField( selectedField - 1 ),
+					"Tuning +"			=> () => MoveCursor( 1 ),
+					"Tuning -"			=> () => MoveCursor( -1 ),
+					"Tuner Auto/Manu"	=> () => SetDigit( 0 ),
+					"Tuner Memory"		=> () => { Save(); return; },
+					"Tuner Shift"		=> () => { isActive = false; editingStopped(); return; }
+					,_					=> () => SetDigit( Regex.Match( commandName, @"^Tuner Channel ([0-9])$" ) is { Success: true } m ? int.Parse( m.Groups[ 1 ].Value ) : -1 )
 				};
 
 				commandAction();
