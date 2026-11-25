@@ -12,7 +12,6 @@
   </Folder>
   <Folder Name="/GHI/">
     <Project Path="../../ImplicateX/TinyCLR/Libraries/GHIElectronics.TinyCLR.Data.Json/GHIElectronics.TinyCLR.Data.Json.csproj" Id="8ab9e093-e7d3-4268-8491-a6efe409191f" />
-    <Project Path="../../ImplicateX/TinyCLR/Libraries/GHIElectronics.TinyCLR.Pins/GHIElectronics.TinyCLR.Pins.csproj" Id="2dceef58-5455-457c-b968-52d791605d07" />
   </Folder>
   <Project Path="THERadioReceiver.csproj" Id="e782d38b-0c01-468d-97d1-65ab87043d54">
     <Deploy />

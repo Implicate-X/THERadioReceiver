@@ -22,8 +22,17 @@ namespace THERadioReceiver
 			/// <summary>I²C address of the MCP23017 GPIO expander.</summary>
 			public const byte Expander = 0x20;
 
+			/// <summary>I²C address of the MCP23017 GPIO OLED expander.</summary>
+			public const byte OledExpander = 0x22;
+
 			/// <summary>I²C address of the real-time clock.</summary>
 			public const byte RTC = 0x52;
+
+			/// <summary>I²C address of the FRAM memory.</summary>
+			public const byte SettingsFeRam = 0x56;
+
+			/// <summary>I²C address of the FRAM memory.</summary>
+			public const byte StationsFeRam = 0x57;
 
 			/// <summary>I²C address of the radio tuner.</summary>
 			public const byte Tuner = 0x64;
@@ -176,8 +185,49 @@ namespace THERadioReceiver
 			public const int LedStereo = 15;
 		}
 
+		/// <summary>
+		/// Contains pin numbers on the MCP23017 OLED GPIO expander.
+		/// </summary>
+		public static class OledExpanderPin
+		{
+			public const int EnableRead = 0;
+
+			public const int ChipSelect = 1;
+
+			public const int DataCommand = 2;
+
+			public const int ReadWrite = 3;
+
+			public const int A1Reset = 4;
+
+			public const int V2Select0 = 5;
+
+			public const int V2Select1 = 6;
+
+			public const int WriteProtect = 7;
+
+			public const int Data0 = 8;
+
+			public const int Data1 = 9;
+
+			public const int Data2 = 10;
+
+			public const int Data3 = 11;
+
+			public const int Data4 = 12;
+
+			public const int Data5 = 13;
+
+			public const int Data6 = 14;
+
+			public const int Data7 = 15;
+		}
+
 		/// <summary>Gets the initialized MCP23017 GPIO expander.</summary>
 		public Mcp23017 GpioExpander { get; private set; } = null!;
+
+		/// <summary>Gets the initialized MCP23017 GPIO OLED expander.</summary>
+		public Mcp23017 GpioOledExpander { get; private set; } = null!;
 
 		/// <summary>Gets the board's GPIO controller.</summary>
 		public GpioController GpioController { get; private set; } = null!;
@@ -185,7 +235,20 @@ namespace THERadioReceiver
 		/// <summary>Gets the board's I²C controller.</summary>
 		public I2cController I2cController { get; private set; } = null!;
 
-		private readonly List<byte> i2cAdresses = [ I2cAddress.Expander, I2cAddress.RTC, I2cAddress.Tuner ];
+		/// <summary>
+		/// Gets or sets the I²C addresses of the connected devices.
+		/// </summary>
+		/// <remarks>Initialized with the addresses of the expander, OLED expander, RTC, settings and stations FRAM,
+		/// and tuner.</remarks>
+		public List<byte> I2cAdresses { get; set; } = 
+		[ 
+			I2cAddress.Expander,
+			I2cAddress.OledExpander,
+			I2cAddress.RTC,
+			I2cAddress.SettingsFeRam,
+			I2cAddress.StationsFeRam,
+			I2cAddress.Tuner
+		];
 
 		/// <summary>
 		/// Initializes the GPIO and I²C controllers, verifies the expected I²C devices,
@@ -200,8 +263,16 @@ namespace THERadioReceiver
 			GpioController = GpioController.GetDefault();
 			I2cController = I2cController.FromName( FEZFeather.I2cBus.I2c1 );
 
+			for( int i = 10; i < 127; i++ )
+			{
+				if( ProbeAddress( (byte)i ) )
+				{
+					Debug.WriteLine( $"I²C device at address 0x{i:X2} found!" );
+				}
+			}
+
 			#region I2C bus scan
-			if( !i2cAdresses.TrueForAll( ProbeAddress ) )
+			if( !I2cAdresses.TrueForAll( ProbeAddress ) )
 			{
 				Debug.WriteLine( "Warning: Not all expected I2C devices were found on the bus!" );
 				return;
@@ -229,6 +300,25 @@ namespace THERadioReceiver
 			intPin.SetDriveMode( GpioPinDriveMode.InputPullUp );
 
 			GpioExpander = new Mcp23017( mcpDevice, interruptPin: intPin );
+			#endregion
+
+			#region OLED Expander MCP23017 Reset sequence
+			GpioPin ioResetPin = GpioController.OpenPin( ControllerPin.IOExtReset );
+			ioResetPin.SetDriveMode( GpioPinDriveMode.Output );
+			ioResetPin.Write( GpioPinValue.High );
+			Thread.Sleep( 100 );
+			ioResetPin.Write( GpioPinValue.Low );
+			Thread.Sleep( 100 );
+			ioResetPin.Write( GpioPinValue.High );
+			Thread.Sleep( 100 );
+			#endregion
+
+			#region OLED Expander MCP23017 initialization
+			var oledExpander = CreateI2cDevice(
+				I2cController,
+				new I2cConnectionSettings( I2cAddress.OledExpander, I2cMode.Master, I2cAddressFormat.SevenBit ) );
+
+			GpioOledExpander = new Mcp23017( oledExpander, resetPin: ioResetPin );
 			#endregion
 
 			#region SN74LVC8T245 level shifter output enable pins

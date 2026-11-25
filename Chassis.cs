@@ -85,7 +85,7 @@ namespace THERadioReceiver
 		/// </summary>
 		private void Initialize()
 		{
-			Settings.Load();
+			//Settings.Load();
 
 			Board.Initialize();
 			Panel.Initialize();
