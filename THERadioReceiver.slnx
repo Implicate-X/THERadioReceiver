@@ -8,6 +8,8 @@
     <Project Path="../../ImplicateX/TinyCLR/Drivers/Decoder/ImplicateX.TinyCLR.Drivers.Decoder.Vs1053/ImplicateX.TinyCLR.Drivers.Decoder.Vs1053.csproj" Id="7a660e98-fa49-4a18-b9c0-9732765d84ce" />
     <Project Path="../../ImplicateX/TinyCLR/Drivers/Display/ImplicateX.TinyCLR.Drivers.Display.Generic16x2VFD/ImplicateX.TinyCLR.Drivers.Display.Generic16x2VFD.csproj" />
     <Project Path="../../ImplicateX/TinyCLR/Drivers/Expander/ImplicateX.TinyCLR.Drivers.Expander.Mcp23017/ImplicateX.TinyCLR.Drivers.Expander.Mcp23017.csproj" />
+    <Project Path="../../ImplicateX/TinyCLR/Drivers/Memory/ImplicateX.TinyCLR.Drivers.Memory.At24c256/ImplicateX.TinyCLR.Drivers.Memory.At24c256.csproj" />
+    <Project Path="../../ImplicateX/TinyCLR/Drivers/Memory/ImplicateX.TinyCLR.Drivers.Memory.Mb85Rc256v/ImplicateX.TinyCLR.Drivers.Memory.Mb85Rc256v.csproj" Id="6861ae81-0d37-bbda-7a2a-3706fa48469e" />
     <Project Path="../../ImplicateX/TinyCLR/Drivers/Tuner/ImplicateX.TinyCLR.Drivers.Tuner.Tef668x/ImplicateX.TinyCLR.Drivers.Tuner.Tef668x.csproj" Id="7e80314f-601d-4f37-bc5a-457a18efb985" />
   </Folder>
   <Folder Name="/GHI/">

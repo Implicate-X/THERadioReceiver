@@ -24,13 +24,21 @@ namespace THERadioReceiver
 	}
 
 	/// <summary>
-	/// Saves and loads serialized persistent records using the configured storage and serializer.
+	/// Provides persistence operations for saving and loading serialized records.
 	/// </summary>
+	/// <param name="storage">The storage used to read and write records.</param>
+	/// <param name="serializer">The serializer used to convert values to and from stored data.</param>
 	public sealed class Persistence( IStorage storage, ISerializer serializer )
 	{
 		private readonly IStorage storage = storage ?? throw new ArgumentNullException( nameof( storage ) );
 		private readonly ISerializer serializer = serializer ?? throw new ArgumentNullException( nameof( serializer ) );
 
+		/// <summary>
+		/// Serializes and stores a value under the specified name.
+		/// </summary>
+		/// <param name="name">The name under which to store the value.</param>
+		/// <param name="value">The value to serialize and store.</param>
+		/// <exception cref="ArgumentNullException">The value is null.</exception>
 		public void Save( string name, object value )
 		{
 			ValidateName( name );
@@ -40,6 +48,13 @@ namespace THERadioReceiver
 			storage.Write( name, serializer.Serialize( value ) );
 		}
 
+		/// <summary>
+		/// Loads the named persistent record.
+		/// </summary>
+		/// <param name="name">The name of the persistent record to load.</param>
+		/// <param name="targetType">The type of the value to load.</param>
+		/// <returns>The loaded value.</returns>
+		/// <exception cref="InvalidOperationException">The persistent record could not be found.</exception>
 		public object Load( string name, Type targetType )
 		{
 			if( !TryLoad( name, targetType, out object value ) )
@@ -48,6 +63,17 @@ namespace THERadioReceiver
 				return value;
 		}
 
+		/// <summary>
+		/// Loads and deserializes the named persistent record as the specified type.
+		/// </summary>
+		/// <param name="name">The name of the persistent record to load.</param>
+		/// <param name="targetType">The type to deserialize the record as.</param>
+		/// <param name="value">When this method returns <see langword="true"/>, contains the deserialized record; otherwise, <see
+		/// langword="null"/>.</param>
+		/// <returns><see langword="true"/> if the record is found and deserialized successfully; otherwise, <see langword="false"/>.</returns>
+		/// <exception cref="ArgumentNullException">The <paramref name="targetType"/> is <see langword="null"/>.</exception>
+		/// <exception cref="InvalidOperationException">The record deserializes to <see langword="null"/> or to a value that is not an instance of <paramref
+		/// name="targetType"/>.</exception>
 		public bool TryLoad( string name, Type targetType, out object value )
 		{
 			ValidateName( name );
@@ -66,9 +92,14 @@ namespace THERadioReceiver
 			if( value == null || !targetType.IsInstanceOfType( value ) )
 				throw new InvalidOperationException( "Invalid persistent record: " + name );
 			
-				return true;
+			return true;
 		}
 
+		/// <summary>
+		/// Validates that a record name is provided.
+		/// </summary>
+		/// <param name="name">The record name to validate.</param>
+		/// <exception cref="ArgumentException">The name is null or empty.</exception>
 		internal static void ValidateName( string name )
 		{
 			if( string.IsNullOrEmpty( name ) ) throw new ArgumentException( "A record name is required.", nameof( name ) );
@@ -82,7 +113,7 @@ namespace THERadioReceiver
 	/// stored data is copied to prevent changes through returned or supplied arrays.</remarks>
 	public sealed class FramStorageDummy : IStorage
 	{
-		private readonly Hashtable records = new();
+		private readonly Hashtable records = [];
 		private readonly object sync = new();
 
 		/// <summary>

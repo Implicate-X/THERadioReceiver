@@ -161,11 +161,20 @@ namespace THERadioReceiver
 			settings.EthernetSettings.SubnetMask = new IPAddress( subnetMask );
 			settings.EthernetSettings.GatewayAddress = new IPAddress( gatewayAddress );
 
-			settings.Save();
-			
+			string message = "Network saved";
+			try
+			{
+				settings.Save();
+			}
+			catch( Exception ex )
+			{
+				Debug.WriteLine( "Network settings could not be persisted: " + ex.Message );
+				message = "Not persisted";
+			}
+
 			isActive = false;
 
-			display.SetLines( "Network saved", string.Empty );
+			display.SetLines( message, string.Empty );
 			
 			Thread.Sleep( 2000 );
 

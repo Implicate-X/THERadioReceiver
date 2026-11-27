@@ -123,9 +123,9 @@ Because some traditions deserve to survive.
 
 ## 🌐 Web Radio Test Playback
 
-The band control switches between FM and the MP3 endpoint in `WebRadio.TestStreamUrl`.
+The band control switches between FM and the first station in `WebRadio.Stations`. Station selection is not implemented yet.
 
-Each playback starts from that stable station URL and follows up to four HTTP redirects with absolute HTTP or HTTPS locations. HTTPS-to-HTTP redirects are rejected.
+Each playback starts from that station URL and follows up to four HTTP redirects with absolute HTTP or HTTPS locations. HTTPS-to-HTTP redirects are rejected.
 
 The final response is used directly for playback, so temporary stream URLs are not reused.
 
@@ -133,7 +133,7 @@ Network audio uses the VS1053 buffered playback path, including its 32 KB prefil
 
 Switching back to FM cancels the HTTP request.
 
-The display shows the configured test station name and format from `WebRadio`; these values must be updated if the endpoint changes.
+The display shows the current station's name and format. The existing network initialization and link handling are not yet wired up; web playback therefore remains unavailable until that work is completed.
 
 ## 🌐 Network Settings
 
@@ -276,7 +276,11 @@ The project demonstrates how far modern embedded development can be pushed using
 
 `Persistence` combines an `ISerializer` with an `IStorage`; callers save named objects without depending on a format or medium. `Load` and `TryLoad` take an explicit target `Type` because TinyCLR can erase generic type arguments. A missing record is distinct from a storage or deserialization failure, which is propagated to the caller. The JSON and BSON serializers use the TinyCLR JSON object mapping; deserialize only trusted data. They are intended for objects and arrays supported by that mapping, not arbitrary .NET types. The BSON serializer wraps the object or array in a BSON document under the `value` member; unsigned integers above `Int64.MaxValue` cannot be represented.
 
-The default chassis configuration currently combines BSON with `FramStorageDummy`. The dummy retains independent byte copies only for the lifetime of that instance; it does not access FRAM and loses data on restart. A missing Ethernet record uses the existing defaults. Settings are saved when `Chassis.Dispose()` is called; the current main loop does not dispose the chassis automatically. A real FRAM driver and a persistent storage layout remain future work. Changing a serializer or medium does not automatically migrate existing records.
+`Chassis.Storage` exposes three independent named-record locations. The default configuration uses the AT24C256 at 0x54 for North, the MB85RC256V at 0x56 for West, and the MB85RC256V at 0x57 for East. Settings use North, FM stations use West and web stations use East; application code does not depend on the medium or its address. Other implementations of `IStorage` can be injected as separate locations. USB mass storage is unrelated.
+
+Each physical location stores BSON records in two alternating, checksummed snapshots, preserving the previous committed snapshot if a write is interrupted. The usable snapshot capacity is half of 32 KiB minus a 20-byte header and record metadata. Blank media are initialized on the first write; unrecognized or corrupt contents are not overwritten automatically. Changing the serializer or medium does not migrate records.
+
+At startup, missing records, unavailable media, or invalid station lists are reported in debug output and the built-in defaults are used. The first FM and web stations are used for playback; station editing and selection are not yet implemented. `Save()` reports write failures to its caller. The network menu retains changes for the current session but displays `Not persisted` if saving fails. No implicit save occurs on chassis disposal.
 
 ## 🎛 Modules & Drivers
 

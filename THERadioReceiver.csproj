@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="packages\GHIElectronics.TinyCLR.UI.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.UI.props" Condition="Exists('packages\GHIElectronics.TinyCLR.UI.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.UI.props')" />
+  <Import Project="packages\GHIElectronics.TinyCLR.Drawing.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Drawing.props" Condition="Exists('packages\GHIElectronics.TinyCLR.Drawing.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Drawing.props')" />
+  <Import Project="packages\GHIElectronics.TinyCLR.Devices.Display.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Devices.Display.props" Condition="Exists('packages\GHIElectronics.TinyCLR.Devices.Display.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Devices.Display.props')" />
   <Import Project="packages\GHIElectronics.TinyCLR.Pins.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Pins.props" Condition="Exists('packages\GHIElectronics.TinyCLR.Pins.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Pins.props')" />
   <Import Project="packages\GHIElectronics.TinyCLR.RegularExpressions.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.RegularExpressions.props" Condition="Exists('packages\GHIElectronics.TinyCLR.RegularExpressions.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.RegularExpressions.props')" />
   <Import Project="packages\GHIElectronics.TinyCLR.Networking.Http.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Networking.Http.props" Condition="Exists('packages\GHIElectronics.TinyCLR.Networking.Http.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Networking.Http.props')" />
@@ -57,6 +60,9 @@
     <Compile Include="Ethernet.cs" />
     <Compile Include="FmRadio.cs" />
     <Compile Include="FmRadioDisplay.cs" />
+    <Compile Include="FmRadioStation.cs" />
+    <Compile Include="MemoryRecordStorage.cs" />
+    <Compile Include="WebRadioStation.cs" />
     <Compile Include="JsonSerializer.cs" />
     <Compile Include="NetworkSettingsMenu.cs" />
     <Compile Include="Panel.cs" />
@@ -64,6 +70,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="UsbStorage.cs" />
     <Compile Include="Storage.cs" />
     <Compile Include="Text.cs" />
     <Compile Include="WebRadio.cs" />
@@ -94,6 +101,14 @@
       <Project>{CEF6FF1A-2573-D219-ABBB-D85B5BAABE36}</Project>
       <Name>ImplicateX.TinyCLR.Drivers.Expander.Mcp23017</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\ImplicateX\TinyCLR\Drivers\Memory\ImplicateX.TinyCLR.Drivers.Memory.At24c256\ImplicateX.TinyCLR.Drivers.Memory.At24c256.csproj">
+      <Project>{ECCFDD52-4D50-4044-8127-F4E9D5075190}</Project>
+      <Name>ImplicateX.TinyCLR.Drivers.Memory.At24c256</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ImplicateX\TinyCLR\Drivers\Memory\ImplicateX.TinyCLR.Drivers.Memory.Mb85Rc256v\ImplicateX.TinyCLR.Drivers.Memory.Mb85Rc256v.csproj">
+      <Project>{6861AE81-0D37-BBDA-7A2A-3706FA48469E}</Project>
+      <Name>ImplicateX.TinyCLR.Drivers.Memory.Mb85Rc256v</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\ImplicateX\TinyCLR\Drivers\Tuner\ImplicateX.TinyCLR.Drivers.Tuner.Tef668x\ImplicateX.TinyCLR.Drivers.Tuner.Tef668x.csproj">
       <Project>{7E80314F-601D-4F37-BC5A-457A18EFB985}</Project>
       <Name>ImplicateX.TinyCLR.Drivers.Tuner.Tef668x</Name>
@@ -104,6 +119,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="GHIElectronics.TinyCLR.Devices.Display, Version=3.0.3.1000, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\GHIElectronics.TinyCLR.Devices.Display.3.0.3.1000\lib\net48\GHIElectronics.TinyCLR.Devices.Display.dll</HintPath>
+    </Reference>
     <Reference Include="GHIElectronics.TinyCLR.Devices.Gpio, Version=3.0.3.1000, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\GHIElectronics.TinyCLR.Devices.Gpio.3.0.3.1000\lib\net48\GHIElectronics.TinyCLR.Devices.Gpio.dll</HintPath>
     </Reference>
@@ -128,6 +146,9 @@
     <Reference Include="GHIElectronics.TinyCLR.Devices.UsbHost, Version=3.0.3.1000, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\GHIElectronics.TinyCLR.Devices.UsbHost.3.0.3.1000\lib\net48\GHIElectronics.TinyCLR.Devices.UsbHost.dll</HintPath>
     </Reference>
+    <Reference Include="GHIElectronics.TinyCLR.Drawing, Version=3.0.3.1000, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\GHIElectronics.TinyCLR.Drawing.3.0.3.1000\lib\net48\GHIElectronics.TinyCLR.Drawing.dll</HintPath>
+    </Reference>
     <Reference Include="GHIElectronics.TinyCLR.IO, Version=3.0.3.1000, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\GHIElectronics.TinyCLR.IO.3.0.3.1000\lib\net48\GHIElectronics.TinyCLR.IO.dll</HintPath>
     </Reference>
@@ -145,6 +166,9 @@
     </Reference>
     <Reference Include="GHIElectronics.TinyCLR.RegularExpressions, Version=3.0.3.1000, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\GHIElectronics.TinyCLR.RegularExpressions.3.0.3.1000\lib\net48\GHIElectronics.TinyCLR.RegularExpressions.dll</HintPath>
+    </Reference>
+    <Reference Include="GHIElectronics.TinyCLR.UI, Version=3.0.3.1000, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\GHIElectronics.TinyCLR.UI.3.0.3.1000\lib\net48\GHIElectronics.TinyCLR.UI.dll</HintPath>
     </Reference>
     <Reference Include="System.Device.Gpio, Version=3.0.3.1000, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\GHIElectronics.TinyCLR.Devices.Gpio.3.0.3.1000\lib\net48\System.Device.Gpio.dll</HintPath>
@@ -179,5 +203,8 @@
     <Error Condition="!Exists('packages\GHIElectronics.TinyCLR.Networking.Http.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Networking.Http.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\GHIElectronics.TinyCLR.Networking.Http.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Networking.Http.props'))" />
     <Error Condition="!Exists('packages\GHIElectronics.TinyCLR.RegularExpressions.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.RegularExpressions.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\GHIElectronics.TinyCLR.RegularExpressions.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.RegularExpressions.props'))" />
     <Error Condition="!Exists('packages\GHIElectronics.TinyCLR.Pins.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Pins.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\GHIElectronics.TinyCLR.Pins.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Pins.props'))" />
+    <Error Condition="!Exists('packages\GHIElectronics.TinyCLR.Devices.Display.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Devices.Display.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\GHIElectronics.TinyCLR.Devices.Display.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Devices.Display.props'))" />
+    <Error Condition="!Exists('packages\GHIElectronics.TinyCLR.Drawing.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Drawing.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\GHIElectronics.TinyCLR.Drawing.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.Drawing.props'))" />
+    <Error Condition="!Exists('packages\GHIElectronics.TinyCLR.UI.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.UI.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\GHIElectronics.TinyCLR.UI.3.0.3.1000\build\net48\GHIElectronics.TinyCLR.UI.props'))" />
   </Target>
 </Project>

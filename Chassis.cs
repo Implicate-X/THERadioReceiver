@@ -43,17 +43,19 @@ namespace THERadioReceiver
 		public Settings Settings { get; private set; } = null!;
 
 		/// <summary>
-		/// Creates the chassis with volatile dummy storage and initializes it.
+		/// Gets the storage associated with the chassis.
 		/// </summary>
-		public Chassis() : this( new Persistence( new FramStorageDummy(), new BsonSerializer() ) )
+		public Storage Storage { get; private set; } = null!;
+
+		/// <summary>Creates the chassis using the configured physical storage locations.</summary>
+		public Chassis() : this( null! )
 		{
 		}
 
-		/// <summary>Creates the chassis with the specified persistence configuration.</summary>
-		public Chassis( Persistence persistence )
+		/// <summary>Creates the chassis with independent, injectable storage locations.</summary>
+		public Chassis( Storage storage )
 		{
-			Settings = new( persistence );
-
+			Storage = storage;
 			Board = new();
 			Panel = new( this );
 			FMRadio = new( this );
@@ -85,9 +87,10 @@ namespace THERadioReceiver
 		/// </summary>
 		private void Initialize()
 		{
-			//Settings.Load();
-
 			Board.Initialize();
+			Storage ??= Storage.CreateDefault( Board.I2cController );
+			Settings = new Settings( new Persistence( Storage.North, new BsonSerializer() ) );
+			Settings.Load();
 			Panel.Initialize();
 			FMRadio.Initialize();
 			WebRadio.Initialize();
@@ -97,7 +100,7 @@ namespace THERadioReceiver
 
 		public void Dispose()
 		{
-			Settings.Save();
+			Storage.Dispose();
 		}
 	}
 }

@@ -28,12 +28,6 @@ namespace THERadioReceiver
 			/// <summary>I²C address of the real-time clock.</summary>
 			public const byte RTC = 0x52;
 
-			/// <summary>I²C address of the FRAM memory.</summary>
-			public const byte SettingsFeRam = 0x56;
-
-			/// <summary>I²C address of the FRAM memory.</summary>
-			public const byte StationsFeRam = 0x57;
-
 			/// <summary>I²C address of the radio tuner.</summary>
 			public const byte Tuner = 0x64;
 		}
@@ -191,7 +185,6 @@ namespace THERadioReceiver
 		public static class OledExpanderPin
 		{
 			public const int EnableRead = 0;
-
 			public const int ChipSelect = 1;
 
 			public const int DataCommand = 2;
@@ -238,15 +231,12 @@ namespace THERadioReceiver
 		/// <summary>
 		/// Gets or sets the I²C addresses of the connected devices.
 		/// </summary>
-		/// <remarks>Initialized with the addresses of the expander, OLED expander, RTC, settings and stations FRAM,
-		/// and tuner.</remarks>
+		/// <remarks>Initialized with the addresses of the expanders, RTC and tuner.</remarks>
 		public List<byte> I2cAdresses { get; set; } = 
 		[ 
 			I2cAddress.Expander,
 			I2cAddress.OledExpander,
 			I2cAddress.RTC,
-			I2cAddress.SettingsFeRam,
-			I2cAddress.StationsFeRam,
 			I2cAddress.Tuner
 		];
 
@@ -262,14 +252,6 @@ namespace THERadioReceiver
 		{
 			GpioController = GpioController.GetDefault();
 			I2cController = I2cController.FromName( FEZFeather.I2cBus.I2c1 );
-
-			for( int i = 10; i < 127; i++ )
-			{
-				if( ProbeAddress( (byte)i ) )
-				{
-					Debug.WriteLine( $"I²C device at address 0x{i:X2} found!" );
-				}
-			}
 
 			#region I2C bus scan
 			if( !I2cAdresses.TrueForAll( ProbeAddress ) )

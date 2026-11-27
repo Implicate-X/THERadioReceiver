@@ -1,32 +1,35 @@
 ﻿using System;
 using System.IO;
 using System.Net;
-using System.Threading;
 using System.Diagnostics;
-using GHIElectronics.TinyCLR.Pins;
 using GHIElectronics.TinyCLR.Devices.Gpio;
-using GHIElectronics.TinyCLR.Devices.Spi;
-using GHIElectronics.TinyCLR.Devices.Network;
 using ImplicateX.TinyCLR.Drivers.Decoder;
 using ImplicateX.TinyCLR.Drivers.Expander;
 
 namespace THERadioReceiver
 {
-	public sealed class WebRadio( Chassis chassis )
+	public sealed partial class WebRadio( Chassis chassis )
 	{
 		public Chassis Chassis { get; private set; } = chassis;
-		private const string TestStreamUrl = "http://media-ice.musicradio.com/CapitalMP3";// "http://100radio-80.ice.infomaniak.ch/100radio-80-128.mp3";// "http://wdr-wdr5-live.icecast.wdr.de/wdr/wdr5/live/mp3/128/stream.mp3";
-		public const string TestStationName = "Bremen Zwei";
-		public const string TestStationFormat = "MP3 128 kbit/s";
+		public Station CurrentStation { get; private set; } = null!;
 		private volatile bool linkReady = false;
 		private GpioController gpioController = null!;
 		private Mcp23017 gpioExpander = null!;
+
+		/// <summary>
+		/// Gets the Web stations.
+		/// </summary>
+		private Stations stations = null!;
 
 		public void Initialize()
 		{
 			gpioController = Chassis.Board.GpioController;
 			gpioExpander = Chassis.Board.GpioExpander;
-		
+
+			stations = new Stations( new Persistence( Chassis.Storage.East, new BsonSerializer() ) );
+			stations.Load();
+
+			CurrentStation = stations.Items[ 0 ];
 		}
 
 		public void StartPlayback( Vs1053 codec )
@@ -36,7 +39,7 @@ namespace THERadioReceiver
 				throw new InvalidOperationException( "Network link is not connected." );
 			}
 
-			var source = new RadioAudioSource( TestStreamUrl );
+			var source = new RadioAudioSource( CurrentStation.Url );
 
 			try
 			{
@@ -49,20 +52,15 @@ namespace THERadioReceiver
 			}
 		}
 
-		private sealed class RadioAudioSource : Vs1053.IBufferedAudioSource
+		private sealed class RadioAudioSource( string url ) : Vs1053.IBufferedAudioSource
 		{
 			private const int MaxRedirects = 4;
 			private readonly object sync = new();
-			private readonly string initialUrl;
+			private readonly string initialUrl = url;
 			private HttpWebRequest request = null!;
 			private HttpWebResponse response = null!;
 			private bool cancelled;
 			private bool disposed;
-
-			public RadioAudioSource( string url )
-			{
-				this.initialUrl = url;
-			}
 
 			public Stream Open()
 			{

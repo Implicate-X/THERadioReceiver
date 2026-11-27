@@ -132,7 +132,7 @@ namespace THERadioReceiver
 				Chassis.FMRadio.PauseForExternalAudio();
 				isWebRadioActive = true;
 
-				Chassis.Panel.VFDisplay.SetLines( WebRadio.TestStationName, WebRadio.TestStationFormat );
+				Chassis.Panel.VFDisplay.SetLines( Chassis.WebRadio.CurrentStation.Name, Chassis.WebRadio.CurrentStation.Format );
 
 				SwitchPin.Write( GpioPinValue.Low );
 

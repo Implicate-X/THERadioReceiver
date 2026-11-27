@@ -15,9 +15,10 @@ namespace THERadioReceiver
 	/// <remarks>Call <see cref="Initialize"/> to initialize the tuner and start receiving RDS
 	/// information.</remarks>
 	/// <param name="chassis">The chassis providing the board's I2C and GPIO controllers.</param>
-	public sealed class FmRadio( Chassis chassis )
+	public sealed partial class FmRadio( Chassis chassis )
 	{
 		public Chassis Chassis { get; private set; } = chassis;
+
 		/// <summary>
 		/// Gets the tuner module.
 		/// </summary>
@@ -79,6 +80,11 @@ namespace THERadioReceiver
 		private DateTime lastSignalDebugOutputUtc = DateTime.MinValue;
 
 		/// <summary>
+		/// Gets the FM stations.
+		/// </summary>
+		private Stations stations = null!;
+
+		/// <summary>
 		/// Initializes and tunes the FM tuner, starts the RDS subsystem, and launches the information thread.
 		/// </summary>
 		public void Initialize()
@@ -86,6 +92,9 @@ namespace THERadioReceiver
 			i2cController = Chassis.Board.I2cController;
 			gpioController = Chassis.Board.GpioController;
 			gpioExpander = Chassis.Board.GpioExpander;
+
+			stations = new Stations( new Persistence( Chassis.Storage.West, new BsonSerializer() ) );
+			stations.Load();
 
 			#region Initialize TEF6686 FM Tuner
 			tunerResPin = gpioExpander.OpenPin( Board.ExpanderPin.TunerReset );
@@ -101,6 +110,7 @@ namespace THERadioReceiver
 
 			TunerModule.Initialize();
 			TunerModule.SetAudioMute( mute: false );
+			TuneFrequency = stations.Items[ 0 ].Frequency10kHz;
 			TunerModule.TuneToFm( frequency10kHz: TuneFrequency );
 
 			RdsSubSystem = TunerModule.CreateRdsSubSystem( dataAvailableActiveHigh: false );
