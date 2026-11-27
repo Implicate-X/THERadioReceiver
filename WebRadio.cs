@@ -8,6 +8,10 @@ using ImplicateX.TinyCLR.Drivers.Expander;
 
 namespace THERadioReceiver
 {
+	/// <summary>
+	/// Coordinates web radio playback for the connected chassis.
+	/// </summary>
+	/// <param name="chassis">The chassis that provides board hardware and persistent storage.</param>
 	public sealed partial class WebRadio( Chassis chassis )
 	{
 		public Chassis Chassis { get; private set; } = chassis;
@@ -21,6 +25,10 @@ namespace THERadioReceiver
 		/// </summary>
 		private Stations stations = null!;
 
+		/// <summary>
+		/// Initializes the GPIO resources, loads saved stations, and selects the first station as current.
+		/// </summary>
+		/// <remarks>The station collection must contain at least one station.</remarks>
 		public void Initialize()
 		{
 			gpioController = Chassis.Board.GpioController;
@@ -32,6 +40,11 @@ namespace THERadioReceiver
 			CurrentStation = stations.Items[ 0 ];
 		}
 
+		/// <summary>
+		/// Starts playback of the current radio station.
+		/// </summary>
+		/// <param name="codec">The VS1053 codec that streams and plays the radio audio.</param>
+		/// <exception cref="InvalidOperationException">The network link is not connected.</exception>
 		public void StartPlayback( Vs1053 codec )
 		{
 			if( !linkReady )
@@ -52,6 +65,12 @@ namespace THERadioReceiver
 			}
 		}
 
+		/// <summary>
+		/// Provides an HTTP audio source for an MP3 radio stream.
+		/// </summary>
+		/// <remarks>Follows up to four redirects and rejects redirects from HTTPS to HTTP. The response must have an
+		/// audio/mpeg content type. The request can be cancelled or disposed.</remarks>
+		/// <param name="url">The URL of the radio stream.</param>
 		private sealed class RadioAudioSource( string url ) : Vs1053.IBufferedAudioSource
 		{
 			private const int MaxRedirects = 4;
@@ -62,6 +81,12 @@ namespace THERadioReceiver
 			private bool cancelled;
 			private bool disposed;
 
+			/// <summary>
+			/// Opens the radio stream and follows valid HTTP redirects.
+			/// </summary>
+			/// <returns>A stream containing MP3 audio.</returns>
+			/// <exception cref="InvalidOperationException">The request was cancelled or disposed, the response is not MP3 audio, the server returned an unexpected status,
+			/// or a redirect is invalid or exceeds the maximum allowed.</exception>
 			public Stream Open()
 			{
 				string url = this.initialUrl;
@@ -164,6 +189,10 @@ namespace THERadioReceiver
 				}
 			}
 
+			/// <summary>
+			/// Cancels the active radio request.
+			/// </summary>
+			/// <remarks>No effect is applied after the instance has been disposed.</remarks>
 			public void Cancel()
 			{
 				lock( this.sync )
@@ -176,6 +205,10 @@ namespace THERadioReceiver
 				}
 			}
 
+			/// <summary>
+			/// Releases the response and request resources.
+			/// </summary>
+			/// <remarks>Subsequent calls have no effect.</remarks>
 			public void Dispose()
 			{
 				lock( this.sync )
